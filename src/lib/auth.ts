@@ -19,3 +19,7 @@ export function getUser(): User | null {
     return null;
   }
 }
+
+export function getToken(): string | null {
+  return Cookies.get("token") || null;
+}
