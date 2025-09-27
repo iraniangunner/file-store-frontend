@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { getUser, clearAuth } from "../../lib/auth";
 import { User } from "../../types";
 import { useRouter } from "next/navigation";
+import { Button } from "@heroui/react";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -34,12 +35,13 @@ export default function Navbar() {
         {user ? (
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-700">سلام، {user.name}</span>
-            <button
+            <Button
               onClick={logout}
+              size="sm"
               className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
             >
               خروج
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="flex gap-2">
