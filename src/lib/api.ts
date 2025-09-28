@@ -1,20 +1,73 @@
 import axios from "axios";
-import Cookies from "js-cookie";
 
+// API base
+const API_URL = "https://componentland.ir/api";
+
+// axios instance
 const api = axios.create({
-  baseURL: "https://componentland.ir/api", // وقتی هاست شدی اینو عوض می‌کنی
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: API_URL,
+  withCredentials: true
 });
 
-// Middleware برای اضافه کردن Token
-api.interceptors.request.use((config) => {
-  const token = Cookies.get("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Flag برای جلوگیری از لوپ بی‌نهایت
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+
+// Response interceptor (برای هندل کردن 401)
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers["Authorization"] = "Bearer " + token;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const res = await axios.post(`${API_URL}/refresh`, {}, { withCredentials: true });
+        const newToken = res.data.access_token;
+
+        processQueue(null, newToken);
+        isRefreshing = false;
+
+        api.defaults.headers.common["Authorization"] = "Bearer " + newToken;
+        originalRequest.headers["Authorization"] = "Bearer " + newToken;
+
+        return api(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        isRefreshing = false;
+        return Promise.reject(err);
+      }
+    }
+
+    return Promise.reject(error);
   }
-  return config;
-});
+);
+
+
 
 export default api;

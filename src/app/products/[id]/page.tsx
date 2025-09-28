@@ -5,6 +5,7 @@ import api from "../../../lib/api";
 import { Product } from "../../../types";
 import toast, { Toaster } from "react-hot-toast";
 import { Button, Select, SelectItem, Spinner } from "@heroui/react";
+import { getToken } from "@/lib/auth";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +16,7 @@ export default function ProductDetail() {
   const currencies = [
     { label: "USDT (ERC20)", key: "usdterc20" },
     { label: "USDT (TRC20)", key: "usdttrc20" },
-    { label: "USDT (BSC)", key: "usdtbsc" },
+    { label: "USDT (BEP20)", key: "usdtbsc" },
   ];
 
   useEffect(() => {
@@ -36,10 +37,18 @@ export default function ProductDetail() {
     if (!product) return;
     setCreating(true);
     try {
-      const res = await api.post("/orders", {
-        product_id: product.id,
-        pay_currency: "usdc",
-      });
+      // const res = await api.post("/orders", {
+      //   product_id: product.id,
+      //   pay_currency: "usdc",
+      // });
+      const res = await api.post(
+        "/orders",
+        {
+          product_id: product.id,
+          pay_currency: payCurrency,
+        },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
       const url = res.data.invoice_url;
       if (url) window.location.href = url;
     } catch (err: any) {
