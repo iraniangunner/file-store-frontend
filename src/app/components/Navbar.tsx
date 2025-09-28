@@ -9,6 +9,7 @@ import { Button } from "@heroui/react";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
+  const [open, setOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,6 +24,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow px-4 py-3 mb-8 flex items-center justify-between">
+      {/* سمت چپ */}
       <div className="flex items-center gap-4">
         <Link href="/" className="font-bold text-lg">
           FileShop
@@ -31,6 +33,8 @@ export default function Navbar() {
           محصولات
         </Link>
       </div>
+
+      {/* سمت راست */}
       <div>
         {user ? (
           <div className="flex items-center gap-3">

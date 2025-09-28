@@ -12,15 +12,27 @@ export interface User {
     file_path: string
   }
   
-  export interface Order {
-    id: number
-    user_id: number
-    product_id: number
-    amount: string
-    currency: string
-    pay_currency: string
-    status: string
-    provider_invoice_url?: string
-    download_url?: string
-  }
+  // export interface Order {
+  //   id: number
+  //   user_id: number
+  //   product_id: number
+  //   amount: string
+  //   currency: string
+  //   pay_currency: string
+  //   status: string
+  //   provider_invoice_url?: string
+  //   download_url?: string
+  // }
+
+ export interface Order {
+  id: number;
+  amount: string;
+  currency: string;
+  pay_currency: string;
+  status: string;
+  created_at: string;
+  product: Product;
+  // provider_invoice_url?: string
+  download_url: string | null;
+};
   

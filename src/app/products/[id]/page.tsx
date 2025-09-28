@@ -38,7 +38,7 @@ export default function ProductDetail() {
     try {
       const res = await api.post("/orders", {
         product_id: product.id,
-        pay_currency: payCurrency,
+        pay_currency: "usdc",
       });
       const url = res.data.invoice_url;
       if (url) window.location.href = url;

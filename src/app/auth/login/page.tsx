@@ -16,7 +16,8 @@ export default function LoginPage() {
     try {
       const res = await api.post<{ token: string; user: User }>("/login", form);
       setAuth(res.data.token, res.data.user);
-      router.push("/products");
+      // router.push("/products");
+      window.location.href = "/products";
     } catch (err: any) {
       alert(err?.response?.data?.message || "خطا در ورود");
     } finally {
