@@ -1,13 +1,15 @@
 import Cookies from "js-cookie";
 import { User } from "../types";
 
-export function setAuth(token: string, user: User) {
-  Cookies.set("token", token, { expires: 7, sameSite: "Lax" });
-  Cookies.set("user", JSON.stringify(user), { expires: 7, sameSite: "Lax" });
+export function setAuth(access_token: string, refresh_token:string, user: User) {
+  Cookies.set("access_token", access_token, { expires: 7, sameSite: "Lax" });
+  Cookies.set("refresh_token", refresh_token, { expires: 7*24*30, sameSite: "Lax" });
+  Cookies.set("user", JSON.stringify(user), { expires: 7, sameSite: "Lax" })
 }
 
 export function clearAuth() {
-  Cookies.remove("token");
+  Cookies.remove("access_token");
+  Cookies.remove("refresh_token");
   Cookies.remove("user");
 }
 
@@ -21,28 +23,5 @@ export function getUser(): User | null {
 }
 
 export function getToken(): string | null {
-  return Cookies.get("token") || null;
+  return Cookies.get("access_token") || null;
 }
-
-// import { User } from "../types";
-
-// let accessToken: string | null = null;
-// let currentUser: User | null = null;
-
-// export function setAuth(token: string, user: User) {
-//   accessToken = token;   // فقط در memory نگه داشته می‌شود
-//   currentUser = user;
-// }
-
-// export function clearAuth() {
-//   accessToken = null;
-//   currentUser = null;
-// }
-
-// export function getUser(): User | null {
-//   return currentUser;
-// }
-
-// export function getToken(): string | null {
-//   return accessToken;
-// }

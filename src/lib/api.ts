@@ -1,12 +1,11 @@
 import axios from "axios";
 
 // API base
-const API_URL = "https://componentland.ir/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // axios instance
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true
 });
 
 // Flag برای جلوگیری از لوپ بی‌نهایت
@@ -31,6 +30,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // فقط وقتی 401 بود
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
@@ -47,15 +47,19 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post(`${API_URL}/refresh`, {}, { withCredentials: true });
+        // 👇 درخواست refresh با فرستادن refresh_token در body
+        const res = await axios.post("/api/refresh"); // بدون body
         const newToken = res.data.access_token;
+        
 
         processQueue(null, newToken);
         isRefreshing = false;
 
+        // آپدیت توکن در هدر axios
         api.defaults.headers.common["Authorization"] = "Bearer " + newToken;
-        originalRequest.headers["Authorization"] = "Bearer " + newToken;
 
+        // دوباره درخواست اصلی رو اجرا کن
+        originalRequest.headers["Authorization"] = "Bearer " + newToken;
         return api(originalRequest);
       } catch (err) {
         processQueue(err, null);
@@ -67,7 +71,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 
 
 export default api;

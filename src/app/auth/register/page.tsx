@@ -105,13 +105,14 @@ export default function RegisterPage() {
     try {
       const res = await api.post<{
         access_token: string;
+        refresh_token:string;
         user: User;
       }>("/register", form);
 
-      setAuth(res.data.access_token, res.data.user);
+      setAuth(res.data.access_token, res.data.refresh_token, res.data.user);
 
-      // window.location.href = "/dashboard";
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
+      // router.push("/dashboard");
     } catch (err: any) {
       alert(err?.response?.data?.message || "خطا در ثبت‌نام");
     } finally {
