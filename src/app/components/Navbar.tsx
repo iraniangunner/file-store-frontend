@@ -4,9 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { User } from "../../types";
 import { useRouter } from "next/navigation";
-import { Button } from "@heroui/react";
+import { Button, Spinner } from "@heroui/react";
 import api from "../../lib/api";
-import { getToken } from "@/lib/auth";
 import { logoutAction } from "../actions/logout";
 import { useFormState, useFormStatus } from "react-dom";
 
@@ -20,7 +19,7 @@ function LogoutButton() {
       disabled={pending}
       className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
     >
-      {pending ? "خروج..." : "خروج"}
+      {pending ? <Spinner size="sm"/> : "Logout"}
     </Button>
   );
 }
@@ -71,7 +70,7 @@ export default function Navbar() {
           FileShop
         </Link>
         <Link href="/products" className="text-sm text-gray-600">
-          محصولات
+        Products
         </Link>
       </div>
 
@@ -80,20 +79,20 @@ export default function Navbar() {
       ) : user ? (
         <form action={formAction}>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-700">سلام، {user.name}</span>
+            <span className="text-sm text-gray-700"> Hi {user.name}</span>
             <LogoutButton />
           </div>
         </form>
       ) : (
         <div className="flex gap-2">
           <Link href="/auth/login" className="text-sm px-3 py-1 border rounded">
-            ورود
+          Login
           </Link>
           <Link
             href="/auth/register"
             className="text-sm px-3 py-1 bg-blue-500 text-white rounded"
           >
-            ثبت‌نام
+          Sign up
           </Link>
         </div>
       )}

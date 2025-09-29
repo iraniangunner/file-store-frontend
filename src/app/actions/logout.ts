@@ -6,53 +6,65 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export async function logoutAction(prevState: any, formData: FormData) {
   const c = await cookies();
-  //const refreshToken = c.get("refresh_token")?.value;
-  const accessToken = c.get("access_token")?.value;
+  let accessToken = c.get("access_token")?.value;
+  const refreshToken = c.get("refresh_token")?.value;
 
   try {
+    // اگر access_token نبود → سعی کن refresh کنی
+    if (!accessToken && refreshToken) {
+      const refreshRes = await fetch(`${API_URL}/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (refreshRes.ok) {
+        const data = await refreshRes.json();
+        accessToken = data.access_token;
+
+        // آپدیت توکن جدید تو کوکی
+        c.set("access_token", accessToken ?? "", {
+          path: "/",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+    }
+
+    // الان access_token باید داشته باشیم
+    if (!accessToken) {
+      return { isSuccess: false, error: "No token available to logout" };
+    }
+
+    // درخواست logout به سرور لاراول
     const res = await fetch(`${API_URL}/logout`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}` }
-    //   body: JSON.stringify({ access_token: accessToken }),
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
+
+    // در هر صورت کوکی‌ها رو پاک کن
     const domain =
-      process.env.NODE_ENV === "production" ? ".jsk-co.com" : undefined;
+      process.env.NODE_ENV === "production" ? ".yourdomain.com" : undefined;
+
+    ["access_token", "refresh_token", "expires_at"].forEach((name) => {
+      c.set({
+        name,
+        value: "",
+        path: "/",
+        domain,
+        expires: new Date(0),
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      });
+    });
 
     if (res.ok) {
-      c.set({
-        name: "access_token",
-        value: "",
-        path: "/",
-        domain,
-        expires: new Date(0),
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-      });
-      c.set({
-        name: "refresh_token",
-        value: "",
-        path: "/",
-        domain,
-        expires: new Date(0),
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-      });
-      c.set({
-        name: "expires_at",
-        value: "",
-        path: "/",
-        domain,
-        expires: new Date(0),
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-      });
       return { isSuccess: true, error: "" };
+    } else {
+      return { isSuccess: false, error: "Logout failed" };
     }
-    return { isSuccess: false, error: "Logout failed" };
   } catch (err) {
     console.error("Logout failed:", err);
     return { isSuccess: false, error: "Network error occurred" };
   }
 }
-
-

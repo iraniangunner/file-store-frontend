@@ -1,169 +1,76 @@
-// "use client";
-// import { useState } from "react";
-// import api from "../../../lib/api";
-// import { setAuth } from "../../../lib/auth";
-// import { useRouter } from "next/navigation";
-// import { User } from "../../../types";
-
-// export default function RegisterPage() {
-//   const [form, setForm] = useState({
-//     name: "",
-//     email: "",
-//     password: "",
-//     password_confirmation: "",
-//   });
-//   const [loading, setLoading] = useState(false);
-//   const router = useRouter();
-
-//   async function submit(e: React.FormEvent) {
-//     e.preventDefault();
-//     setLoading(true);
-//     try {
-//       const res = await api.post<{ token: string; user: User }>(
-//         "/register",
-//         form
-//       );
-//       setAuth(res.data.token, res.data.user);
-//       // router.push("/products");
-//       window.location.href = "/dashboard";
-//     } catch (err: any) {
-//       alert(err?.response?.data?.message || "خطا در ثبت‌نام");
-//     } finally {
-//       setLoading(false);
-//     }
-//   }
-
-//   return (
-//     <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-//       <h2 className="text-xl font-bold mb-4">ثبت‌نام</h2>
-//       <form onSubmit={submit} className="space-y-3">
-//         <input
-//           required
-//           placeholder="نام"
-//           value={form.name}
-//           onChange={(e) => setForm({ ...form, name: e.target.value })}
-//           className="w-full p-2 border rounded"
-//         />
-//         <input
-//           required
-//           type="email"
-//           placeholder="ایمیل"
-//           value={form.email}
-//           onChange={(e) => setForm({ ...form, email: e.target.value })}
-//           className="w-full p-2 border rounded"
-//         />
-//         <input
-//           required
-//           type="password"
-//           placeholder="رمز عبور"
-//           value={form.password}
-//           onChange={(e) => setForm({ ...form, password: e.target.value })}
-//           className="w-full p-2 border rounded"
-//         />
-//         <input
-//           required
-//           type="password"
-//           placeholder="تکرار رمز عبور"
-//           value={form.password_confirmation}
-//           onChange={(e) =>
-//             setForm({ ...form, password_confirmation: e.target.value })
-//           }
-//           className="w-full p-2 border rounded"
-//         />
-//         <button
-//           type="submit"
-//           className="w-full bg-green-600 text-white py-2 rounded cursor-pointer"
-//           disabled={loading}
-//         >
-//           {loading ? "در حال ثبت..." : "ثبت‌نام"}
-//         </button>
-//       </form>
-//     </div>
-//   );
-// }
-
 "use client";
-import { useState } from "react";
-import api from "../../../lib/api";
-import { setAuth } from "../../../lib/auth";
-import { useRouter } from "next/navigation";
-import { User } from "../../../types";
 
-export default function RegisterPage() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    password_confirmation: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+import { useFormState, useFormStatus } from "react-dom";
+import { registerAction } from "@/app/actions/register";
+import { useEffect } from "react";
+import { Button, Input, Spinner } from "@heroui/react";
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await api.post<{
-        access_token: string;
-        refresh_token:string;
-        user: User;
-      }>("/register", form);
-
-      setAuth(res.data.access_token, res.data.refresh_token, res.data.user);
-
-      window.location.href = "/dashboard";
-      // router.push("/dashboard");
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "خطا در ثبت‌نام");
-    } finally {
-      setLoading(false);
-    }
-  }
+function SubmitButton() {
+  const { pending } = useFormStatus();
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-bold mb-4">ثبت‌نام</h2>
-      <form onSubmit={submit} className="space-y-3">
-        <input
-          required
-          placeholder="نام"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          required
-          type="email"
-          placeholder="ایمیل"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          required
-          type="password"
-          placeholder="رمز عبور"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          required
-          type="password"
-          placeholder="تکرار رمز عبور"
-          value={form.password_confirmation}
-          onChange={(e) =>
-            setForm({ ...form, password_confirmation: e.target.value })
-          }
-          className="w-full p-2 border rounded"
-        />
-        <button
-          type="submit"
-          className="w-full bg-green-600 text-white py-2 rounded cursor-pointer"
-          disabled={loading}
-        >
-          {loading ? "در حال ثبت..." : "ثبت‌نام"}
-        </button>
+    <Button
+      size="sm"
+      type="submit"
+      className="w-full cursor-pointer"
+      disabled={pending}
+    >
+      {pending ? <Spinner size="sm" className="h-4 w-4 animate-spin" /> : <></>}
+      <span>{pending ? "Signing up ..." : "Sign up"}</span>
+    </Button>
+  );
+}
+
+export default function RegisterPage() {
+  const [state, formAction] = useFormState(registerAction, {
+    isSuccess: false,
+    error: "",
+  });
+
+  useEffect(() => {
+    if (state?.isSuccess) {
+      window.location.href = "/dashboard";
+    }
+  }, [state?.isSuccess]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form
+        action={formAction}
+        className="bg-white p-8 rounded-2xl shadow w-full max-w-md space-y-5"
+      >
+        <h1 className="text-2xl font-bold text-center">Signup</h1>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Name</label>
+          <Input type="text" name="name" required />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Email</label>
+          <Input type="email" name="email" required />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Password</label>
+          <Input type="password" name="password" required minLength={8} />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Password Confirmation</label>
+          <Input
+            type="password"
+            name="password_confirmation"
+            required
+            minLength={8}
+          />
+        </div>
+
+        <SubmitButton />
+
+        {state?.error && (
+          <p className="text-xs text-red-500 text-center">{state.error}</p>
+        )}
       </form>
     </div>
   );

@@ -1,4 +1,3 @@
-
 "use client";
 import { useFormState, useFormStatus } from "react-dom";
 import { loginAction } from "@/app/actions/login";
@@ -12,7 +11,7 @@ function SubmitButton() {
   return (
     <Button size="sm" type="submit" className="w-full cursor-pointer" disabled={pending}>
       {pending ? <Spinner size="sm" className="h-4 w-4 animate-spin" /> : <></>}
-      <span>{pending ? "در حال ورود ..." : "ورود"}</span>
+      <span>{pending ?"Login ...": "Login"}</span>
     </Button>
   );
 }
@@ -40,15 +39,15 @@ export default function LoginPage() {
         action={formAction}
         className="bg-white p-8 rounded-2xl shadow w-full max-w-md space-y-5"
       >
-        <h1 className="text-2xl font-bold text-center">ورود به پنل کاربری</h1>
+        <h1 className="text-2xl font-bold text-center">Login</h1>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium">نام کاربری</label>
+          <label className="text-sm font-medium">Email</label>
           <Input type="email" name="email" required />
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium">رمز عبور</label>
+          <label className="text-sm font-medium">Password</label>
           <Input type="password" name="password" required />
         </div>
 
