@@ -8,8 +8,6 @@ import {
   Card,
   CardBody,
   CardFooter,
-  CardHeader,
-  Chip,
   Skeleton,
 } from "@heroui/react";
 

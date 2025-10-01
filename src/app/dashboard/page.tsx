@@ -1,26 +1,22 @@
-
 "use client";
-
 import { useEffect, useState } from "react";
 import api from "../../lib/api";
 import toast from "react-hot-toast";
 import { Order } from "@/types";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { getToken } from "@/lib/auth";
+import { InternalAxiosRequestConfig } from "axios";
 
 export default function OrdersPage() {
-  useAuthGuard();
+  // useAuthGuard();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch("/api/token");
-        const { token } = await response.json();
         const res = await api.get<Order[]>("/orders", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+          requiresAuth: true,
+        } as InternalAxiosRequestConfig);
         setOrders(res.data);
       } catch (err: any) {
         if (err.response?.status === 401) {
@@ -36,6 +32,29 @@ export default function OrdersPage() {
     fetchOrders();
   }, []);
 
+  async function downloadOrderFile(order: Order) {
+    if (!order) return;
+
+    try {
+      const res = await api.get(`/orders/${order.id}/download`, {
+        responseType: "blob",
+        requiresAuth: true,
+      } as any);
+
+      const blob = new Blob([res.data], { type: "application/pdf" }); // نوع فایل مهم است
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = order.product?.title || "file.pdf"; // یا نام واقعی فایل
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("خطا در دانلود فایل");
+    }
+  }
   if (loading) return <p className="p-4">در حال بارگذاری...</p>;
 
   return (
@@ -86,12 +105,12 @@ export default function OrdersPage() {
                   </td>
                   <td className="p-3">
                     {order.download_url ? (
-                      <a
-                        href={order.download_url}
-                        className="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700"
+                      <button
+                        onClick={() => downloadOrderFile(order)}
+                        className="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 cursor-pointer"
                       >
                         دانلود
-                      </a>
+                      </button>
                     ) : (
                       <span className="text-gray-400 text-xs">غیرفعال</span>
                     )}

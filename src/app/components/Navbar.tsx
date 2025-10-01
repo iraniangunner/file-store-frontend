@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { User } from "../../types";
@@ -8,6 +7,7 @@ import { Button, Spinner } from "@heroui/react";
 import api from "../../lib/api";
 import { logoutAction } from "../actions/logout";
 import { useFormState, useFormStatus } from "react-dom";
+import { InternalAxiosRequestConfig } from "axios";
 
 function LogoutButton() {
   const { pending } = useFormStatus();
@@ -19,7 +19,7 @@ function LogoutButton() {
       disabled={pending}
       className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
     >
-      {pending ? <Spinner size="sm"/> : "Logout"}
+      {pending ? <Spinner size="sm" /> : "Logout"}
     </Button>
   );
 }
@@ -38,12 +38,9 @@ export default function Navbar() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch("/api/token");
-        const { token } = await response.json();
-
         const res = await api.get("/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+          requiresAuth: true,
+        } as InternalAxiosRequestConfig);
 
         setUser(res.data.user);
         setLoading(false);
@@ -70,12 +67,12 @@ export default function Navbar() {
           FileShop
         </Link>
         <Link href="/products" className="text-sm text-gray-600">
-        Products
+          Products
         </Link>
       </div>
 
       {loading && !user ? (
-        <p>loading...</p>
+        <Spinner size="lg" />
       ) : user ? (
         <form action={formAction}>
           <div className="flex items-center gap-3">
@@ -86,13 +83,13 @@ export default function Navbar() {
       ) : (
         <div className="flex gap-2">
           <Link href="/auth/login" className="text-sm px-3 py-1 border rounded">
-          Login
+            Login
           </Link>
           <Link
             href="/auth/register"
             className="text-sm px-3 py-1 bg-blue-500 text-white rounded"
           >
-          Sign up
+            Sign up
           </Link>
         </div>
       )}

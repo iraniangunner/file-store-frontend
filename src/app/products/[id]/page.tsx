@@ -5,7 +5,7 @@ import api from "../../../lib/api";
 import { Product } from "../../../types";
 import toast, { Toaster } from "react-hot-toast";
 import { Button, Select, SelectItem, Spinner } from "@heroui/react";
-import { getToken } from "@/lib/auth";
+import { InternalAxiosRequestConfig } from "axios";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +47,7 @@ export default function ProductDetail() {
           product_id: product.id,
           pay_currency: payCurrency,
         },
-        { headers: { Authorization: `Bearer ${getToken()}` } }
+        { requiresAuth: true } as InternalAxiosRequestConfig
       );
       const url = res.data.invoice_url;
       if (url) window.location.href = url;
