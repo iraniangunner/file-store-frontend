@@ -1,152 +1,172 @@
 "use client";
 import { useEffect, useState } from "react";
 import api from "../../../lib/api";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { Order } from "@/types";
 import {
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
   Table,
   TableHeader,
   TableColumn,
   TableBody,
   TableRow,
   TableCell,
+  Button,
+  Progress,
+  Card,
+  CardHeader,
+  CardBody,
   Spinner,
 } from "@heroui/react";
 import { InternalAxiosRequestConfig } from "axios";
-import { useRouter } from "next/navigation";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [progress, setProgress] = useState<{ [key: number]: number }>({});
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await api.get<Order[]>("/orders", {
-          requiresAuth: true,
-        } as InternalAxiosRequestConfig);
+        const res = await api.get<Order[]>("/orders", { requiresAuth: true } as InternalAxiosRequestConfig);
         setOrders(res.data);
       } catch (err: any) {
-        if (err.response?.status === 401) {
-          toast.error("Please login first");
-        } else {
-          toast.error("Something went wrong");
-        }
+        if (err.response?.status === 401) toast.error("Please login first");
+        else toast.error("Something went wrong");
       } finally {
         setLoading(false);
       }
     };
-
     fetchOrders();
   }, []);
 
-  //   async function downloadOrderFile(order: Order) {
-  //     if (!order) return;
+  async function downloadOrderFile(order: Order) {
+    if (!order) return;
+    setProgress((prev) => ({ ...prev, [order.id]: 0 }));
 
-  //     try {
-  //       const res = await api.get(`/orders/${order.id}/download`, {
-  //         responseType: "blob",
-  //         requiresAuth: true,
-  //       } as any);
+    try {
+      const res = await api.get(`/orders/${order.id}/download`, {
+        responseType: "blob",
+        onDownloadProgress: (e:any) => {
+          const percent = Math.round((e.loaded * 100) / (e.total || 1));
+          setProgress((prev) => ({ ...prev, [order.id]: percent }));
+        },
+        requiresAuth: true,
+      } as any);
 
-  //       const blob = new Blob([res.data], { type: "application/pdf" });
-  //       const url = window.URL.createObjectURL(blob);
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
 
-  //       const a = document.createElement("a");
-  //       a.href = url;
-  //       a.download = order.product?.title || "file.pdf";
-  //       document.body.appendChild(a);
-  //       a.click();
-  //       a.remove();
-  //       window.URL.revokeObjectURL(url);
-  //     } catch {
-  //       toast.error("Error downloading file");
-  //     }
-  //   }
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = order.product?.title || "file.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      // بروزرسانی download_used بعد از دانلود موفق
+      setOrders((prevOrders) =>
+        prevOrders.map((o:any) =>
+          o.id === order.id
+            ? { ...o, download_used: o.download_used + 1 }
+            : o
+        )
+      );
+      setProgress((prev) => ({ ...prev, [order.id]: 100 }));
+    } catch (err: any) {
+      toast.error(err.message);
+      setProgress((prev) => ({ ...prev, [order.id]: 0 }));
+    }
+  }
 
   if (loading)
     return (
-      <div className="min-h-[80vh] flex justify-center items-center">
-        <Spinner size="lg" />
+      <div className="flex justify-center items-center min-h-[80vh]">
+        <Spinner />
       </div>
     );
 
   return (
     <div className="max-w-6xl mx-auto p-6">
+      <Toaster />
       <Card>
-        <CardHeader className="font-bold text-lg">My Orders</CardHeader>
+        <CardHeader>
+          <h2 className="text-lg font-bold">My Orders</h2>
+        </CardHeader>
         <CardBody>
           {orders.length === 0 ? (
             <p>No orders found.</p>
           ) : (
-            <Table
-              aria-label="Orders List"
-              removeWrapper
-              shadow="none"
-              className="min-w-full"
-            >
+            <Table aria-label="Orders List">
               <TableHeader>
                 <TableColumn>ID</TableColumn>
                 <TableColumn>Product</TableColumn>
                 <TableColumn>Amount</TableColumn>
                 <TableColumn>Status</TableColumn>
                 <TableColumn>Date</TableColumn>
-                {/* <TableColumn>Download</TableColumn> */}
+                <TableColumn>Download</TableColumn>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => (
-                  <TableRow
-                    key={order.id}
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => router.push(`/dashboard/orders/${order.id}`)}
-                  >
-                    <TableCell>{order.id}</TableCell>
-                    <TableCell>{order.product?.title}</TableCell>
-                    <TableCell>
-                      {order.amount} {order.currency.toUpperCase()}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          order.status === "finished" ||
-                          order.status === "confirmed"
-                            ? "bg-green-100 text-green-800"
-                            : order.status === "waiting"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(order.created_at).toLocaleDateString("en-US")}
-                    </TableCell>
-                    {/* <TableCell>
-                      {order.download_url ? (
-                        <Button
-                          size="sm"
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation(); // prevent row click
-                            downloadOrderFile(order);
-                          }}
+                {orders.map((order:any) => {
+                  const canDownload =
+                    order.download_allowed > order.download_used &&
+                    order.download_expires_at &&
+                    new Date(order.download_expires_at) > new Date();
+
+                  return (
+                    <TableRow key={order.id}>
+                      <TableCell>{order.id}</TableCell>
+                      <TableCell>{order.product?.title}</TableCell>
+                      <TableCell>
+                        {order.amount} {order.currency.toUpperCase()}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            order.status === "finished" ||
+                            order.status === "confirmed"
+                              ? "bg-green-100 text-green-800"
+                              : order.status === "waiting"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
                         >
-                          Download
-                        </Button>
-                      ) : (
-                        <span className="text-gray-400 text-xs">
-                          Unavailable
+                          {order.status}
                         </span>
-                      )}
-                    </TableCell> */}
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(order.created_at).toLocaleDateString("en-US")}
+                      </TableCell>
+                      <TableCell>
+                        {canDownload ? (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => downloadOrderFile(order)}
+                            >
+                              Download ({order.download_allowed - order.download_used} left)
+                            </Button>
+                            {progress[order.id] !== undefined &&
+                              progress[order.id] < 100 && (
+                                <Progress
+                                  value={progress[order.id]}
+                                  color="primary"
+                                  size="sm"
+                                  className="mt-1"
+                                />
+                              )}
+                          </>
+                        ) : (
+                          <span className="text-gray-400 text-xs">
+                            {order.download_allowed === 0
+                              ? "No downloads allowed"
+                              : "Expired"}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

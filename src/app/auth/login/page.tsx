@@ -22,9 +22,44 @@ export default function LoginPage() {
     error: "",
   });
 
+
+
+
+  const handleGoogleLogin = () => {
+    const width = 500;
+    const height = 600;
+    const left = window.innerWidth / 2 - width / 2;
+    const top = window.innerHeight / 2 - height / 2;
+
+    window.open(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/google/redirect`,
+      "GoogleLogin",
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
+  };
+
+
   const router = useRouter();
   // const recaptchaRef = useRef<ReCAPTCHA>(null);
   // const [token, setToken] = useState("");
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.status === "success") {
+        // fetch برای گرفتن user از cookie
+        fetch("/api/me")
+          .then(res => res.json())
+          .then(user => {
+            console.log("Logged in user:", user);
+            router.push("/dashboard/orders");
+          });
+      }
+    }
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   useEffect(() => {
     if (state?.isSuccess) {
@@ -62,6 +97,8 @@ export default function LoginPage() {
         {/* <input type="hidden" name="g-recaptcha-response" value={token} /> */}
 
         <SubmitButton />
+        <Button onClick={handleGoogleLogin} className="w-full cursor-pointer">Login with Google</Button>
+        
 
         {state?.error && (
           <p className="text-xs text-red-500 text-center">{state.error}</p>
