@@ -64,7 +64,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (state?.isSuccess) {
       // router.push("/dashboard");
-      window.location.href = "/dashboard";
+      window.location.href = "/dashboard/orders";
     }
   }, [state?.isSuccess, router]);
 

@@ -1,8 +1,8 @@
 "use client";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import api from "../../../../lib/api";
-import { Order } from "../../../../types";
+import api from "../../../../../lib/api";
+import { Order } from "../../../../../types";
 import { InternalAxiosRequestConfig } from "axios";
 import {
   Card,

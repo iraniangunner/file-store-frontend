@@ -1,4 +1,3 @@
-
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -42,7 +41,7 @@ export default function Navbar() {
   useEffect(() => {
     if (state.isSuccess) {
       setUser(null);
-      router.push("/auth/login");
+      router.push("/auth");
     }
   }, [state, router]);
 
@@ -80,14 +79,14 @@ export default function Navbar() {
       
       ) : (
         <div className="flex gap-2">
-          <Link href="/auth/login" className="text-sm px-3 py-1 border rounded">
-            Login
-          </Link>
+          {/* <Link href="/auth" className="text-sm px-3 py-1 border rounded">
+            Login / Sign up
+          </Link> */}
           <Link
-            href="/auth/register"
+            href="/auth"
             className="text-sm px-3 py-1 bg-blue-500 text-white rounded"
           >
-            Sign up
+            Login / Sign up
           </Link>
         </div>
       )}

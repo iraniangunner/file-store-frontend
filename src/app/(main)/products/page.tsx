@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import api from "../../lib/api";
-import { Product } from "../../types";
+import api from "../../../lib/api";
+import { Product } from "../../../types";
 import Link from "next/link";
 import {
   Button,

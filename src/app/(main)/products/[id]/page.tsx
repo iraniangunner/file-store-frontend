@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import api from "../../../lib/api";
-import { Product } from "../../../types";
+import api from "../../../../lib/api";
+import { Product } from "../../../../types";
 import toast, { Toaster } from "react-hot-toast";
 import { Button, Select, SelectItem, Spinner } from "@heroui/react";
 import { InternalAxiosRequestConfig } from "axios";

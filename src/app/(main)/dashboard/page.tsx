@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import api from "../../lib/api";
+import api from "../../../lib/api";
 import toast from "react-hot-toast";
 import { Order } from "@/types";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
