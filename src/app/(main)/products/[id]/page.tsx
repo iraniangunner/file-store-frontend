@@ -26,9 +26,9 @@ export default function ProductDetail() {
       .then((res) => setProduct(res.data))
       .catch((err) => {
         if (err.response?.status === 401) {
-          toast.error("لطفا ابتدا وارد شوید");
+          toast.error("Please login first");
         } else {
-          toast.error("خطایی رخ داد");
+          toast.error("Something went wrong");
         }
       });
   }, [id]);
@@ -53,9 +53,9 @@ export default function ProductDetail() {
       if (url) window.location.href = url;
     } catch (err: any) {
       if (err.response?.status === 401) {
-        toast.error("لطفا ابتدا وارد شوید");
+        toast.error("Please login first");
       } else {
-        toast.error("خرید انجام نشد، دوباره تلاش کنید");
+        toast.error("Something went wrong");
       }
     } finally {
       setCreating(false);

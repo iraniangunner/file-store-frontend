@@ -3,7 +3,14 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { User } from "../../types";
 import { useRouter } from "next/navigation";
-import { Button, Spinner, Dropdown, DropdownItem, DropdownTrigger, DropdownMenu } from "@heroui/react";
+import {
+  Button,
+  Spinner,
+  Dropdown,
+  DropdownItem,
+  DropdownTrigger,
+  DropdownMenu,
+} from "@heroui/react";
 import api from "../../lib/api";
 import { logoutAction } from "../actions/logout";
 import { useFormState, useFormStatus } from "react-dom";
@@ -60,33 +67,31 @@ export default function Navbar() {
 
       {user ? (
         <Dropdown>
-        <DropdownTrigger>
-          <Button variant="bordered">Hi {user.name}</Button>
-        </DropdownTrigger>
-        <DropdownMenu aria-label="User Menu">
-          <DropdownItem key={"orders"}>
-            <Link href="/dashboard/orders" className="w-full block">Orders</Link>
-          </DropdownItem>
-          <DropdownItem key={"logout"}>
-            <form action={formAction}>
-              <Button type="submit"  className="w-full text-left">
-                Logout
-              </Button>
-            </form>
-          </DropdownItem>
-        </DropdownMenu>
-      </Dropdown>
-      
+          <DropdownTrigger>
+            <Button variant="bordered">Hi {user.name}</Button>
+          </DropdownTrigger>
+          <DropdownMenu aria-label="User Menu">
+            <DropdownItem key={"orders"}>
+              <Link href="/dashboard/orders" className="w-full block">
+                Orders
+              </Link>
+            </DropdownItem>
+            <DropdownItem key={"logout"}>
+              <form action={formAction}>
+                <Button type="submit" className="w-full text-left">
+                  Logout
+                </Button>
+              </form>
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
       ) : (
         <div className="flex gap-2">
-          {/* <Link href="/auth" className="text-sm px-3 py-1 border rounded">
-            Login / Sign up
-          </Link> */}
           <Link
             href="/auth"
-            className="text-sm px-3 py-1 bg-blue-500 text-white rounded"
+            className="text-sm px-3 py-2 bg-blue-500 text-white rounded"
           >
-            Login / Sign up
+            Login / Signup
           </Link>
         </div>
       )}
