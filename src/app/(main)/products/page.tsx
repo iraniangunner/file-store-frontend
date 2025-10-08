@@ -41,13 +41,13 @@ export default function ProductsPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-6 py-16">
           <div className="text-center mb-16">
-            <h1 className="text-5xl font-semibold text-foreground mb-4">
+            {/* <h1 className="text-5xl font-semibold text-foreground mb-4">
               Our Products
             </h1>
             <p className="text-default-500 text-lg max-w-2xl mx-auto">
               Explore premium digital products crafted for creators and
               developers.
-            </p>
+            </p> */}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 justify-items-center">
@@ -112,13 +112,13 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-semibold text-foreground mb-4">
+          {/* <h1 className="text-5xl font-semibold text-foreground mb-4">
             Our Products
           </h1>
           <p className="text-default-500 text-lg max-w-2xl mx-auto">
             Explore premium digital products crafted for creators and
             developers.
-          </p>
+          </p> */}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 justify-items-center">

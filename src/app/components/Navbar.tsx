@@ -56,14 +56,13 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow px-4 py-3 mb-8 flex items-center justify-between">
-      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4">
         <Link href="/" className="font-bold text-lg">
-          FileShop
-        </Link>
-        <Link href="/products" className="text-sm text-gray-600">
-          Products
+        <span className="text-[#3B9FE8]">Filer</span>
+            <span className="text-[#3D3D8F]">Get</span>
         </Link>
       </div>
+
 
       {user ? (
         <Dropdown>
