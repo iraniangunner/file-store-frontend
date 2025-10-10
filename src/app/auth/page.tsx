@@ -16,6 +16,7 @@ import { registerAction } from "@/app/_actions/register";
 import { loginAction } from "@/app/_actions/login";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 function SubmitButton({
   labelPending,
@@ -43,6 +44,10 @@ function SubmitButton({
 export default function AuthPage() {
   const router = useRouter();
   const [selected, setSelected] = useState("login");
+
+ const [loginCaptchaToken, setLoginCaptchaToken] = useState<string | null>(null);
+  const [registerCaptchaToken, setRegisterCaptchaToken] = useState<string | null>(null);
+
 
   // --- Login Form ---
   const [loginState, loginFormAction] = useFormState(loginAction, {
@@ -125,6 +130,18 @@ export default function AuthPage() {
                 placeholder="Enter your password"
                 type="password"
               />
+
+              <HCaptcha
+                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+                onVerify={(token) => setLoginCaptchaToken(token)}
+              />
+
+              {/* کپچا را به فرم اضافه می‌کنیم به صورت hidden input */}
+              <input
+                type="hidden"
+                name="h-captcha-response"
+                value={loginCaptchaToken ?? ""}
+              />
               <SubmitButton labelPending="Login..." labelIdle="Login" />
 
               {loginState?.error && (
@@ -174,6 +191,17 @@ export default function AuthPage() {
                 type="password"
                 minLength={8}
               />
+
+                  <HCaptcha
+                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+                onVerify={(token) => setRegisterCaptchaToken(token)}
+              />
+              <input
+                type="hidden"
+                name="h-captcha-response"
+                value={registerCaptchaToken ?? ""}
+              />
+
               <SubmitButton labelPending="Signing up..." labelIdle="Sign up" />
               {/* <Button
                 onClick={handleGoogleLogin}

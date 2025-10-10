@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-//const RECAPTCHA_SECRET = process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY!;
+const HCAPTCHA_SECRET = process.env.NEXT_PUBLIC_HCAPTCHA_SECRET_KEY!;
 
 const cookieBase = {
   httpOnly: true,
@@ -29,36 +29,32 @@ type LoginResp = {
 export async function loginAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  //const token = formData.get("g-recaptcha-response") as string;
+  const token = formData.get("h-captcha-response") as string;
 
   // Basic validation
   if (!email || !password) {
     return { isSuccess: false, error: "نام کاربری و رمز عبور را وارد کنید" };
   }
 
-//   if (!token) {
-//     return { isSuccess: false, error: "لطفا reCAPTCHA را تکمیل کنید" };
-//   }
+  if (!token) {
+    return { isSuccess: false, error: "Please complete the hCaptcha." };
+  }
 
-  // ✅ مرحله اول: بررسی reCAPTCHA
-//   try {
-//     const verifyRes = await fetch(
-//       "https://www.google.com/recaptcha/api/siteverify",
-//       {
-//         method: "POST",
-//         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//         body: `secret=${RECAPTCHA_SECRET}&response=${token}`,
-//       }
-//     );
+  try {
+    const verifyRes = await fetch("https://hcaptcha.com/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `secret=${HCAPTCHA_SECRET}&response=${token}`,
+    });
 
-//     const verifyData = await verifyRes.json();
+    const verifyData = await verifyRes.json();
 
-//     if (!verifyData.success) {
-//       return { isSuccess: false, error: "تأیید reCAPTCHA ناموفق بود" };
-//     }
-//   } catch (err) {
-//     return { isSuccess: false, error: "خطا در بررسی reCAPTCHA" };
-//   }
+    if (!verifyData.success) {
+      return { isSuccess: false, error: "hCaptcha verification failed." };
+    }
+  } catch (err) {
+    return { isSuccess: false, error: "Error verifying hCaptcha." };
+  }
 
   // ✅ مرحله دوم: لاگین به API
   try {
