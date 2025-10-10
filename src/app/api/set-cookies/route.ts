@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   //   sameSite: "none" as const,
   //   path: "/",
   //   secure: true,
-  //   domain: ".jsk-co.com",
+  //   domain: ".filerget.com",
   // };
 
   const expires_At = Date.now() + expiresAt * 1000;

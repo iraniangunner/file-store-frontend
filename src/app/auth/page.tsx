@@ -12,8 +12,8 @@ import {
   Spinner,
 } from "@heroui/react";
 import { useFormState, useFormStatus } from "react-dom";
-import { registerAction } from "@/app/actions/register";
-import { loginAction } from "@/app/actions/login";
+import { registerAction } from "@/app/_actions/register";
+import { loginAction } from "@/app/_actions/login";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 

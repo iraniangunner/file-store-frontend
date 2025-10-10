@@ -44,7 +44,7 @@ export async function logoutAction(prevState: any, formData: FormData) {
 
     // در هر صورت کوکی‌ها رو پاک کن
     const domain =
-      process.env.NODE_ENV === "production" ? ".yourdomain.com" : undefined;
+      process.env.NODE_ENV === "production" ? ".filerget.com" : undefined;
 
     ["access_token", "refresh_token", "expires_at"].forEach((name) => {
       c.set({

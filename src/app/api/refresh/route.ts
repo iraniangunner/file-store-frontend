@@ -20,7 +20,7 @@ export async function POST() {
     return new Response(JSON.stringify(data), { status: res.status });
   }
 
- // بروز رسانی cookie ها
+// بروز رسانی cookie ها
   const cookieBase = {
     httpOnly: true,
     sameSite: "lax" as const,
@@ -33,7 +33,7 @@ export async function POST() {
 //   sameSite: "none" as const,
 //   path: "/",
 //   secure: true,
-//   domain: ".jsk-co.com",
+//   domain: ".filerget.com",
 // };
 
   const expiresAt = Date.now() + data.expires_in * 1000;

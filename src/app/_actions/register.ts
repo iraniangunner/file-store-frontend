@@ -17,62 +17,64 @@ const cookieBase = {
 //   sameSite: "none" as const,
 //   path: "/",
 //   secure: true,
-//   domain: ".jsk-co.com",
+//   domain: ".filerget.com",
 // };
 
-type LoginResp = {
+type RegisterResp = {
   access_token: string;
   refresh_token: string;
   expires_in: number; // ثانیه
 };
 
-export async function loginAction(prevState: any, formData: FormData) {
+export async function registerAction(prevState: any, formData: FormData) {
+  const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const password_confirmation = formData.get("password_confirmation") as string;
   //const token = formData.get("g-recaptcha-response") as string;
 
   // Basic validation
-  if (!email || !password) {
+  if (!name || !email || !password || !password_confirmation) {
     return { isSuccess: false, error: "نام کاربری و رمز عبور را وارد کنید" };
   }
 
-//   if (!token) {
-//     return { isSuccess: false, error: "لطفا reCAPTCHA را تکمیل کنید" };
-//   }
+  //   if (!token) {
+  //     return { isSuccess: false, error: "لطفا reCAPTCHA را تکمیل کنید" };
+  //   }
 
   // ✅ مرحله اول: بررسی reCAPTCHA
-//   try {
-//     const verifyRes = await fetch(
-//       "https://www.google.com/recaptcha/api/siteverify",
-//       {
-//         method: "POST",
-//         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//         body: `secret=${RECAPTCHA_SECRET}&response=${token}`,
-//       }
-//     );
+  //   try {
+  //     const verifyRes = await fetch(
+  //       "https://www.google.com/recaptcha/api/siteverify",
+  //       {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  //         body: `secret=${RECAPTCHA_SECRET}&response=${token}`,
+  //       }
+  //     );
 
-//     const verifyData = await verifyRes.json();
+  //     const verifyData = await verifyRes.json();
 
-//     if (!verifyData.success) {
-//       return { isSuccess: false, error: "تأیید reCAPTCHA ناموفق بود" };
-//     }
-//   } catch (err) {
-//     return { isSuccess: false, error: "خطا در بررسی reCAPTCHA" };
-//   }
+  //     if (!verifyData.success) {
+  //       return { isSuccess: false, error: "تأیید reCAPTCHA ناموفق بود" };
+  //     }
+  //   } catch (err) {
+  //     return { isSuccess: false, error: "خطا در بررسی reCAPTCHA" };
+  //   }
 
   // ✅ مرحله دوم: لاگین به API
   try {
-    const res = await fetch(`${API_URL}/login`, {
+    const res = await fetch(`${API_URL}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ name, email, password, password_confirmation }),
     });
 
     if (!res.ok) {
       return { isSuccess: false, error: "ایمیل یا رمز عبور اشتباه است" };
     }
 
-    const data = (await res.json()) as LoginResp;
+    const data = (await res.json()) as RegisterResp;
     const c = await cookies();
 
     const expiresAt = Date.now() + data.expires_in * 1000;
@@ -93,6 +95,6 @@ export async function loginAction(prevState: any, formData: FormData) {
 
     return { isSuccess: true, error: "" };
   } catch (error) {
-    return { isSuccess: false, error: "Login failed" };
+    return { isSuccess: false, error: "Register failed" };
   }
 }

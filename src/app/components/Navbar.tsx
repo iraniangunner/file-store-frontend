@@ -12,7 +12,7 @@ import {
   DropdownMenu,
 } from "@heroui/react";
 import api from "../../lib/api";
-import { logoutAction } from "../actions/logout";
+import { logoutAction } from "../_actions/logout";
 import { useFormState, useFormStatus } from "react-dom";
 import { InternalAxiosRequestConfig } from "axios";
 
