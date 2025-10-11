@@ -8,7 +8,7 @@ export async function POST(req:Request) {
     return new Response(JSON.stringify({ error: "No refresh token" }), { status: 401 });
   }
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/oauth/refresh`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),

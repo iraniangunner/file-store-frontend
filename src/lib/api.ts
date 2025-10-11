@@ -54,7 +54,7 @@ api.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/api/refresh")
+      !originalRequest.url.includes("/api/refresh-token")
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -71,7 +71,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post("/api/refresh");
+        const res = await axios.post("/api/refresh-token");
         const newToken = res.data.access_token;
 
         processQueue(null, newToken);
