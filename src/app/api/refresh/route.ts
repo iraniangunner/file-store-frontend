@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-export async function POST() {
+export async function POST(req:Request) {
   const c = cookies();
   const refreshToken = c.get("refresh_token")?.value;
 
@@ -8,11 +8,12 @@ export async function POST() {
     return new Response(JSON.stringify({ error: "No refresh token" }), { status: 401 });
   }
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/refresh`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/oauth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
+
 
   const data = await res.json();
 
@@ -20,6 +21,7 @@ export async function POST() {
     return new Response(JSON.stringify(data), { status: res.status });
   }
 
+  
 // بروز رسانی cookie ها
   const cookieBase = {
     httpOnly: true,

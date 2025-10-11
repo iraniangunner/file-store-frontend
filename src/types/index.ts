@@ -2,6 +2,7 @@ export interface User {
     id: number
     name: string
     email: string
+    role:string
   }
   
   export interface Product {
@@ -10,6 +11,7 @@ export interface User {
     description: string
     price: string
     file_path: string
+    total_sales:string
   }
   
 

@@ -65,7 +65,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     });
 
     if (!res.ok) {
-      return { isSuccess: false, error: "ایمیل یا رمز عبور اشتباه است" };
+      return { isSuccess: false, error: "Email or password is invalid" };
     }
 
     const data = (await res.json()) as LoginResp;

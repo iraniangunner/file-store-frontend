@@ -35,7 +35,7 @@ export async function registerAction(prevState: any, formData: FormData) {
 
   // Basic validation
   if (!name || !email || !password || !password_confirmation) {
-    return { isSuccess: false, error: "نام کاربری و رمز عبور را وارد کنید" };
+    return { isSuccess: false, error: "Enter the username and password" };
   }
 
   if (!token) {
@@ -68,7 +68,7 @@ export async function registerAction(prevState: any, formData: FormData) {
     });
 
     if (!res.ok) {
-      return { isSuccess: false, error: "ایمیل یا رمز عبور اشتباه است" };
+      return { isSuccess: false, error: "Email or password is invalid" };
     }
 
     const data = (await res.json()) as RegisterResp;

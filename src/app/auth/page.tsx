@@ -17,6 +17,8 @@ import { loginAction } from "@/app/_actions/login";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import api from "@/lib/api";
+import { InternalAxiosRequestConfig } from "axios";
 
 function SubmitButton({
   labelPending,
@@ -45,9 +47,12 @@ export default function AuthPage() {
   const router = useRouter();
   const [selected, setSelected] = useState("login");
 
- const [loginCaptchaToken, setLoginCaptchaToken] = useState<string | null>(null);
-  const [registerCaptchaToken, setRegisterCaptchaToken] = useState<string | null>(null);
-
+  const [loginCaptchaToken, setLoginCaptchaToken] = useState<string | null>(
+    null
+  );
+  const [registerCaptchaToken, setRegisterCaptchaToken] = useState<
+    string | null
+  >(null);
 
   // --- Login Form ---
   const [loginState, loginFormAction] = useFormState(loginAction, {
@@ -64,7 +69,21 @@ export default function AuthPage() {
   // Handle login success
   useEffect(() => {
     if (loginState?.isSuccess) {
-      window.location.href = "/dashboard/orders";
+      (async () => {
+        try {
+          const res = await api.get("/auth/me", {
+            requiresAuth: true,
+          } as InternalAxiosRequestConfig);
+          const user = res.data.user;
+          if (user?.role === "admin") {
+            router.push("/dashboard/admin");
+          } else {
+            router.push("/dashboard/orders");
+          }
+        } catch {
+          router.push("/dashboard/orders");
+        }
+      })();
     }
   }, [loginState?.isSuccess]);
 
@@ -192,7 +211,7 @@ export default function AuthPage() {
                 minLength={8}
               />
 
-                  <HCaptcha
+              <HCaptcha
                 sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
                 onVerify={(token) => setRegisterCaptchaToken(token)}
               />
