@@ -39,7 +39,7 @@ export function ProductCard({ product }: any) {
         <span className="text-xl font-bold text-primary">${product.price}</span>
         <Button
           as={Link}
-          href={`/products/${product.id}`}
+          href={`/products/${product.slug}`}
           color="primary"
           radius="full"
           size="sm"

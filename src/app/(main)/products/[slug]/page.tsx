@@ -8,7 +8,7 @@ import { Button, Select, SelectItem, Spinner } from "@heroui/react";
 import { InternalAxiosRequestConfig } from "axios";
 
 export default function ProductDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [payCurrency, setPayCurrency] = useState("usdterc20"); // پیش‌فرض
@@ -20,9 +20,9 @@ export default function ProductDetail() {
   ];
 
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
     api
-      .get<Product>(`/products/${id}`)
+      .get<Product>(`/products/${slug}`)
       .then((res) => setProduct(res.data))
       .catch((err) => {
         if (err.response?.status === 401) {
@@ -31,7 +31,7 @@ export default function ProductDetail() {
           toast.error("Something went wrong");
         }
       });
-  }, [id]);
+  }, [slug]);
 
   async function handleBuy() {
     if (!product) return;
