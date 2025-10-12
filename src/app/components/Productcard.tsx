@@ -6,10 +6,13 @@ import {
   Divider,
   Button,
   Image,
+  Chip,
 } from "@heroui/react";
 import Link from "next/link";
 
 export function ProductCard({ product }: any) {
+
+   const isFree = product.price == 0;
   return (
     <Card
       key={product.id}
@@ -18,13 +21,23 @@ export function ProductCard({ product }: any) {
       isPressable
       className="w-[340px] rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
-      {/* <CardHeader className="p-0">
-      <Image
-        alt={product.title}
-        // src={product.image || "/placeholder.png"}
-        className="w-full h-[200px] object-cover rounded-t-2xl"
-      />
-    </CardHeader> */}
+     <CardHeader className="p-0 relative">
+        <Image
+          alt={product.title}
+          src={product.image || "/placeholder.png"}
+          className="w-full h-[200px] object-cover rounded-t-2xl"
+        />
+        {isFree && (
+          <Chip
+            color="success"
+            variant="flat"
+            size="sm"
+            className="absolute top-2 right-2"
+          >
+            Free
+          </Chip>
+        )}
+      </CardHeader>
 
       <CardBody className="p-5">
         <h3 className="text-lg font-semibold mb-1 text-foreground">
