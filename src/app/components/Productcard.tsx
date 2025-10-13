@@ -21,10 +21,10 @@ export function ProductCard({ product }: any) {
       isPressable
       className="w-[340px] rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
-     <CardHeader className="p-0 relative">
+     <CardHeader className="p-0 relative justify-center">
         <Image
           alt={product.title}
-          src={product.image || "/placeholder.png"}
+          src={product.image || "/images/folder.png"}
           className="w-full h-[200px] object-cover rounded-t-2xl"
         />
         {isFree && (

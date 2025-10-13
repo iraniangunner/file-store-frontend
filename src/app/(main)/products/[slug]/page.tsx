@@ -4,8 +4,9 @@ import { useParams } from "next/navigation";
 import api from "../../../../lib/api";
 import { Product } from "../../../../types";
 import toast, { Toaster } from "react-hot-toast";
-import { Button, Select, SelectItem, Spinner } from "@heroui/react";
+import { Button, Divider, Select, SelectItem, Spinner } from "@heroui/react";
 import { InternalAxiosRequestConfig } from "axios";
+import Image from "next/image";
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -14,9 +15,16 @@ export default function ProductDetail() {
   const [payCurrency, setPayCurrency] = useState("usdterc20"); // پیش‌فرض
 
   const currencies = [
-    { label: "USDT (ERC20)", key: "usdterc20" },
-    { label: "USDT (TRC20)", key: "usdttrc20" },
-    { label: "USDT (BEP20)", key: "usdtbsc" },
+    {
+      label: "USDT (ERC20)",
+      key: "usdterc20",
+      icon: "/images/USDT-ERC20.png",
+    },
+    {
+      label: "USDT (BEP20)",
+      key: "usdtbsc",
+      icon: "/images/USDT-BEP20.png",
+    },
   ];
 
   useEffect(() => {
@@ -84,7 +92,26 @@ export default function ProductDetail() {
           label="pay currency"
           placeholder="Select the currency"
         >
-          {(currency) => <SelectItem>{currency.label}</SelectItem>}
+          {/* {(currency) => <SelectItem>
+
+            {currency.label}
+            </SelectItem>} */}
+          {(currency) => (
+            <SelectItem key={currency.key} textValue={currency.label}>
+              <div className="flex items-center gap-2">
+               
+
+                <Image
+                  src={currency.icon}
+                  alt={currency.label}
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+                 <span>{currency.label}</span>
+              </div>
+            </SelectItem>
+          )}
         </Select>
       </div>
 
