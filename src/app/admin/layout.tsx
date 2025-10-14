@@ -1,3 +1,4 @@
+"use client"; 
 import { MainSideBar } from "./_components/main-sidebar";
 
 export default function AdminLayout({

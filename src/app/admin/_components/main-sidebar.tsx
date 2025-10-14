@@ -5,7 +5,7 @@ import { Button, Card, CardBody } from "@heroui/react";
 import { Home, Settings, LogOut, Menu, FolderKanban, X } from "lucide-react";
 import Link from "next/link";
 import { useFormState } from "react-dom";
-import { logoutAction } from "@/app/_actions/logout";
+import { logoutAction } from "../../../app/_actions/logout";
 import { useRouter } from "next/navigation";
 
 export function MainSideBar() {

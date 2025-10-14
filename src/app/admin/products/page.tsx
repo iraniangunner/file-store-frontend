@@ -11,8 +11,8 @@ import {
 } from "@heroui/react";
 import { Pagination } from "@heroui/pagination";
 import { Pencil, Trash2 } from "lucide-react";
-import { Product, User } from "@/types";
-import api from "@/lib/api";
+import { Product, User } from "../../../types";
+import api from "../../../lib/api";
 import { InternalAxiosRequestConfig } from "axios";
 import { CreateProductModal } from "../_components/create-product-modal";
 import { EditProductModal } from "../_components/edit-product-modal";
