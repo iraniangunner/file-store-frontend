@@ -10,23 +10,37 @@ import {
   Button,
 } from "@heroui/react";
 import { Pagination } from "@heroui/pagination";
-import { Pencil, Trash2 } from "lucide-react"; // 👈 Import icons
-import { Product, User } from "@/types";
+import { Pencil, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import { InternalAxiosRequestConfig } from "axios";
-import { CreateProductModal } from "./_components/create-product-modal";
-import { EditProductModal } from "./_components/edit-product-modal";
-import { DeleteProductModal } from "./_components/delete-product-modal";
+import { CreateCategoryModal } from "../_components/create-category-modal";
+import { EditCategoryModal } from "../_components/edit-category-modal";
+import { DeleteCategoryModal } from "../_components/delete-category-modal";
 
-export default function ProductTable() {
-  const [products, setProducts] = useState<Product[]>([]);
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  role: string;
+}
+
+export default function CategoryTable() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [page, setPage] = useState(1);
   const [user, setUser] = useState<User | null>(null);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
-  const rowsPerPage = 5;
+  const rowsPerPage = 10;
 
+  // Fetch current user
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -43,23 +57,24 @@ export default function ProductTable() {
     fetchUser();
   }, []);
 
-  const fetchProducts = async () => {
+  // Fetch categories
+  const fetchCategories = async () => {
     try {
-      const response = await fetch("https://filerget.com/api/products");
-      const result = await response.json();
-      setProducts(result);
+      const res = await api.get("/categories", {
+        requiresAuth: true,
+      } as InternalAxiosRequestConfig);
+      setCategories(res.data.data || res.data); // adjust depending on API response
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to fetch categories:", error);
     }
   };
 
-  // Fetch products from API
   useEffect(() => {
-    fetchProducts();
+    fetchCategories();
   }, []);
 
-  const totalPages = Math.ceil(products.length / rowsPerPage);
-  const paginatedData = products.slice(
+  const totalPages = Math.ceil(categories.length / rowsPerPage);
+  const paginatedData = categories.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
@@ -84,44 +99,40 @@ export default function ProductTable() {
 
   return (
     <div className="p-6 flex flex-col gap-6">
-      <CreateProductModal onProductCreated={fetchProducts} />
+      <CreateCategoryModal onCategoryCreated={fetchCategories} />
+
       <Table
-        aria-label="Products Table with Pagination"
+        aria-label="Categories Table with Pagination"
         className="shadow-md rounded-2xl"
       >
         <TableHeader>
           <TableColumn>ID</TableColumn>
-          <TableColumn>TITLE</TableColumn>
-          <TableColumn>DESCRIPTION</TableColumn>
-          <TableColumn>PRICE ($)</TableColumn>
-          <TableColumn>TOTAL SALES</TableColumn>
-          <TableColumn>ACTIONS</TableColumn>
+          <TableColumn>Name</TableColumn>
+          <TableColumn>Description</TableColumn>
+          <TableColumn>Actions</TableColumn>
         </TableHeader>
 
-        <TableBody emptyContent={"No products found."}>
-          {paginatedData.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>{product.id}</TableCell>
-              <TableCell>{product.title}</TableCell>
+        <TableBody emptyContent={"No categories found."}>
+          {paginatedData.map((category) => (
+            <TableRow key={category.id}>
+              <TableCell>{category.id}</TableCell>
+              <TableCell>{category.name}</TableCell>
               <TableCell className="max-w-[250px] truncate">
-                {product.description}
+                {category.description}
               </TableCell>
-              <TableCell>{product.price}</TableCell>
-              <TableCell>{product.total_sales}</TableCell>
               <TableCell>
                 <div className="flex gap-3">
-                  {/* ✅ Open Edit Modal on click */}
                   <Button
                     variant="flat"
                     color="primary"
-                    onPress={() => setEditingProduct(product)}
+                    onPress={() => setEditingCategory(category)}
                   >
                     <Pencil size={18} />
                   </Button>
                   <Button
                     variant="flat"
                     color="danger"
-                    onPress={() => setDeletingProduct(product)}
+                    onPress={() => setDeletingCategory(category)}
                   >
                     <Trash2 size={18} />
                   </Button>
@@ -132,34 +143,34 @@ export default function ProductTable() {
         </TableBody>
       </Table>
 
-      {/* Pagination controls */}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-4">
           <Pagination
             total={totalPages}
             page={page}
             onChange={setPage}
             showControls
-            className="mt-4"
           />
         </div>
       )}
 
-      {/* ✅ Edit Product Modal */}
-      {editingProduct && (
-       <EditProductModal
-       product={editingProduct}
-       isOpen={!!editingProduct}
-       onClose={() => setEditingProduct(null)}
-       onProductUpdated={fetchProducts}
-     />
+      {/* Edit Category Modal */}
+      {editingCategory && (
+        <EditCategoryModal
+          category={editingCategory}
+          isOpen={!!editingCategory}
+          onClose={() => setEditingCategory(null)}
+          onCategoryUpdated={fetchCategories}
+        />
       )}
 
-      {deletingProduct && (
-        <DeleteProductModal
-          product={deletingProduct}
-          onClose={() => setDeletingProduct(null)}
-          onDeleted={fetchProducts} // refresh table
+      {/* Delete Category Modal */}
+      {deletingCategory && (
+        <DeleteCategoryModal
+          category={deletingCategory}
+          onClose={() => setDeletingCategory(null)}
+          onDeleted={fetchCategories}
         />
       )}
     </div>

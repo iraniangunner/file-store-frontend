@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Modal,
@@ -14,15 +14,35 @@ import {
 import { Plus } from "lucide-react";
 import api from "@/lib/api"; // your axios instance
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export function CreateProductModal({ onProductCreated }: { onProductCreated?: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     file: null as File | null,
+    categoryId: "",
   });
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get("/categories", { requiresAuth: true } as any);
+        setCategories(res.data.data || res.data);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -30,8 +50,8 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
   };
 
   const handleSubmit = async () => {
-    if (!form.title || !form.description || !form.file || !form.price) {
-      alert("Please fill all fields and upload a file.");
+    if (!form.title || !form.description || !form.price || !form.file || !form.categoryId) {
+      alert("Please fill all fields, upload a file, and select a category.");
       return;
     }
 
@@ -43,6 +63,7 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
       formData.append("description", form.description);
       formData.append("price", form.price);
       formData.append("file", form.file);
+      formData.append("category_id", form.categoryId);
 
       await api.post("/products", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -50,7 +71,7 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
       } as any);
 
       setIsOpen(false);
-      setForm({ title: "", description: "", price: "", file: null });
+      setForm({ title: "", description: "", price: "", file: null, categoryId: "" });
       onProductCreated?.(); // Refresh product list
     } catch (error) {
       console.error("Error creating product:", error);
@@ -95,6 +116,23 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
               value={form.price}
               onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
             />
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Category
+              </label>
+              <select
+                value={form.categoryId}
+                onChange={(e) => setForm((p) => ({ ...p, categoryId: e.target.value }))}
+                className="block w-full border rounded-lg p-2 text-sm"
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">
                 Upload File (PDF)

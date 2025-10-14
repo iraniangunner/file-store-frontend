@@ -19,7 +19,7 @@ export function ProductCard({ product }: any) {
       shadow="sm"
       isHoverable
       isPressable
-      className="w-[340px] rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+      className="rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
      <CardHeader className="p-0 relative justify-center">
         <Image

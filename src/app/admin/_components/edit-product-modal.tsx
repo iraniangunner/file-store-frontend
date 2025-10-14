@@ -14,6 +14,11 @@ import {
 import { Product } from "@/types";
 import api from "@/lib/api";
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 interface EditProductModalProps {
   product: Product | null;
   isOpen: boolean;
@@ -32,11 +37,26 @@ export function EditProductModal({
     description: "",
     price: "",
     file: null as File | null,
+    categoryId: "",
   });
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // مقداردهی فرم وقتی محصول تغییر می‌کند
+  // Load categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get("/categories", { requiresAuth: true } as any);
+        setCategories(res.data.data || res.data);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Initialize form when product changes
   useEffect(() => {
     if (product) {
       setForm({
@@ -44,6 +64,7 @@ export function EditProductModal({
         description: product.description || "",
         price: product.price?.toString() || "",
         file: null,
+        categoryId: product.category_id?.toString() || "",
       });
     }
   }, [product]);
@@ -57,7 +78,7 @@ export function EditProductModal({
     if (!product) return;
 
     if (!form.title || !form.description || !form.price) {
-      alert("Please fill in all required fields.");
+      alert("Please fill in all required fields and select a category.");
       return;
     }
 
@@ -67,10 +88,11 @@ export function EditProductModal({
       formData.append("title", form.title);
       formData.append("description", form.description);
       formData.append("price", form.price);
+      formData.append("category_id", form.categoryId);
 
       if (form.file) formData.append("file", form.file);
 
-      await api.post(`/products/${product.id}?_method=PUT`, formData, {
+      await api.post(`/products/${product.slug}?_method=PUT`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         requiresAuth: true,
       } as any);
@@ -127,9 +149,7 @@ export function EditProductModal({
           <Textarea
             label="Description"
             value={form.description}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, description: e.target.value }))
-            }
+            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
           />
           <Input
             label="Price ($)"
@@ -137,6 +157,26 @@ export function EditProductModal({
             value={form.price}
             onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
           />
+
+          {/* Category Dropdown */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">
+              Category
+            </label>
+            <select
+              value={form.categoryId}
+              onChange={(e) => setForm((p) => ({ ...p, categoryId: e.target.value }))}
+              className="block w-full border rounded-lg p-2 text-sm"
+            >
+              <option value="">Select a category</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
               Upload New File (PDF)
@@ -169,6 +209,7 @@ export function EditProductModal({
               )
             )}
           </div>
+
           <Button
             color="primary"
             onPress={handleSubmit}

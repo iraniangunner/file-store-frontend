@@ -76,7 +76,7 @@ export default function AuthPage() {
           } as InternalAxiosRequestConfig);
           const user = res.data.user;
           if (user?.role === "admin") {
-            router.push("/dashboard/admin");
+            router.push("/admin");
           } else {
             router.push("/dashboard/orders");
           }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   Input,
@@ -11,204 +11,272 @@ import {
   Divider,
   Skeleton,
 } from "@heroui/react";
-import { Search } from "lucide-react";
-import api from "@/lib/api";
+import { DollarSign, Filter, Package, RotateCcw, Search } from "lucide-react";
 import { Product } from "@/types";
 import { ProductCard } from "@/app/components/Productcard";
+import debounce from "lodash.debounce";
 
 export default function ProductsPage() {
+  // === Init states from URL ===
+  const searchParams = new URLSearchParams(window.location.search);
+
+  const initialCategories = searchParams.get("category_id")
+    ? searchParams.get("category_id")!.split(",")
+    : [];
+  const initialSearch = searchParams.get("search") || "";
+  const initialPage = Number(searchParams.get("page")) || 1;
+
+  // === states ===
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [page, setPage] = useState(initialPage);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    []
+  );
+  const [selectedCategories, setSelectedCategories] =
+    useState<string[]>(initialCategories);
+
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
+
   const [appliedFilters, setAppliedFilters] = useState({
-    categories: [] as string[],
-    priceRange: [0, 1000] as [number, number],
+    categories: initialCategories,
+    priceRange: [0, 0] as [number, number],
   });
 
-  const [visibleCount, setVisibleCount] = useState(6);
-
-  // Fetch products
+  // === fetch categories ===
   useEffect(() => {
-    const fetchProducts = async () => {
+    (async () => {
       try {
-        const res = await api.get<Product[]>("/products");
-        setProducts(res.data);
-      } catch {
-        setError("Failed to load products. Please try again later.");
+        const res = await fetch("https://filerget.com/api/categories");
+        const data = await res.json();
+        setCategories(data.data || []);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, []);
+
+  // === fetch price range from server ===
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(
+          "https://filerget.com/api/products/meta/price-range"
+        );
+        const data = await res.json();
+        const min = Number(data.min_price) || 0;
+        const max = Number(data.max_price) || 1000;
+        setMinPrice(min);
+        setMaxPrice(max);
+        setPriceRange([min, max]); // <-- این باید همزمان با min/max باشه
+        setAppliedFilters((prev) => ({ ...prev, priceRange: [min, max] }));
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, []);
+
+  // --- debounce search handler ---
+  const handleSearch = useCallback(
+    debounce((value: string) => {
+      setSearchQuery(value);
+      setPage(1);
+    }, 500),
+    []
+  );
+
+  // === fetch products ===
+  const fetchProducts = useCallback(
+    async (pageNumber = 1) => {
+      if (minPrice === null || maxPrice === null || priceRange === null) return;
+      try {
+        setLoading(true);
+
+        const params = new URLSearchParams();
+        if (searchQuery) params.append("search", searchQuery);
+        if (appliedFilters.categories.length)
+          params.append("category_id", appliedFilters.categories.join(","));
+        if (appliedFilters.priceRange[0] > minPrice)
+          params.append("min_price", appliedFilters.priceRange[0].toString());
+        if (appliedFilters.priceRange[1] < maxPrice)
+          params.append("max_price", appliedFilters.priceRange[1].toString());
+        params.append("page", pageNumber.toString());
+        params.append("per_page", "6");
+
+        const url = `https://filerget.com/api/products${
+          params.toString() ? `?${params.toString()}` : ""
+        }`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (pageNumber === 1) {
+          setProducts(data.data);
+        } else {
+          setProducts((prev) => [...prev, ...data.data]);
+        }
+
+        setPage(data.current_page);
+        setTotalPages(data.last_page);
+
+        const newUrl = params.toString() ? `?${params.toString()}` : "";
+        window.history.replaceState(null, "", `/products${newUrl}`);
+
+        setError("");
+      } catch (err) {
+        setError("Failed to load products.");
       } finally {
         setLoading(false);
       }
-    };
-    fetchProducts();
-  }, []);
+    },
+    [searchQuery, appliedFilters, minPrice, maxPrice, priceRange]
+  );
 
-  // Dynamic price range
-  const prices = products.map((p) => p.price);
-  const minPrice = prices.length ? Math.min(...prices) : 0;
-  const maxPrice = prices.length ? Math.max(...prices) : 1000;
-
+  // fetch products when filters/search/page changes
   useEffect(() => {
-    if (products.length) setPriceRange([minPrice, maxPrice]);
-  }, [products, minPrice, maxPrice]);
-
-  // Unique categories
-  const categories = Array.from(new Set(products.map((p:any) => p.category)));
-
-  // Filtered products
-  const filteredProducts = products
-    .filter((p:any) => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter((p:any) =>
-      appliedFilters.categories.length
-        ? appliedFilters.categories.includes(p.category)
-        : true
-    )
-    .filter(
-      (p:any) =>
-        p.price >= appliedFilters.priceRange[0] &&
-        p.price <= appliedFilters.priceRange[1]
-    );
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-
-  // Reset visibleCount when filters/search change
-  useEffect(() => {
-    setVisibleCount(6);
+    fetchProducts(1);
   }, [appliedFilters, searchQuery]);
 
-  // --- Loading ---
-  if (loading) {
+  // --- UI --- Loading
+  if (loading && !products.length)
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex justify-center items-center h-screen">
         <Skeleton className="h-10 w-80" />
       </div>
     );
-  }
-
-  // --- Error ---
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
-        <p className="text-lg text-red-500 font-medium">{error}</p>
-        <Button onPress={() => window.location.reload()}>Retry</Button>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-6 py-16">
-        {/* Search Bar */}
+        {/* Search */}
         <div className="mb-8 relative w-full max-w-lg">
           <Input
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            placeholder="Search..."
+            defaultValue={searchQuery}
+            onChange={(e) => handleSearch(e.currentTarget.value)}
             className="pr-10"
           />
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
 
-        {/* Main Layout */}
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <Card className="w-full sm:w-80 lg:w-64 p-4 border rounded-xl flex flex-col justify-between self-start lg:sticky lg:top-20">
+          <Card className="w-full sm:w-80 lg:w-64 p-5 border rounded-2xl shadow-sm bg-white/80 backdrop-blur-sm self-start lg:sticky lg:top-20">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-gray-800 text-base flex items-center gap-2">
+                <Filter className="w-4 h-4 text-primary" /> Filters
+              </h2>
+              <Button
+                size="sm"
+                variant="ghost"
+                onPress={() => {
+                  if (minPrice !== null && maxPrice !== null) {
+                    const newRange: [number, number] = [minPrice, maxPrice];
+                    setSelectedCategories([]);
+                    setPriceRange(newRange);
+                    setAppliedFilters({ categories: [], priceRange: newRange });
+                  }
+                }}
+                className="text-gray-500 text-sm flex items-center gap-1"
+              >
+                <RotateCcw className="w-4 h-4" /> Reset
+              </Button>
+            </div>
+            <Divider className="mb-4" />
+
             <div className="space-y-6 flex-1">
               {/* Categories */}
-              <div className="flex flex-col h-60 overflow-y-auto">
-                <h3 className="font-semibold mb-2">Categories</h3>
-                <Divider className="mb-2" />
+              <div>
+                <h3 className="font-semibold text-gray-700 text-sm mb-2 flex items-center gap-2">
+                  <Package className="w-4 h-4 text-primary" /> Categories
+                </h3>
                 <CheckboxGroup
                   value={selectedCategories}
                   onValueChange={(values) =>
                     setSelectedCategories(values as string[])
                   }
                 >
-                  {categories.map((category) => (
-                    <Checkbox key={category} value={category}>
-                      {category}
+                  {categories.map((c) => (
+                    <Checkbox key={c.id} value={String(c.id)}>
+                      {c.name}
                     </Checkbox>
                   ))}
                 </CheckboxGroup>
               </div>
 
               {/* Price */}
-              <div className="flex flex-col h-40 overflow-y-auto mt-4">
-                <h3 className="font-semibold mb-2">Price</h3>
-                <Divider className="mb-2" />
+              <div>
+                <h3 className="font-semibold text-gray-700 text-sm mb-2 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-primary" /> Price
+                </h3>
                 <p className="text-sm text-gray-500 mb-2">
-                  ${priceRange[0]} - ${priceRange[1]}
+                  {priceRange ? `$${priceRange[0]} - $${priceRange[1]}` : ""}
                 </p>
-                <Slider
-                  min={minPrice}
-                  max={maxPrice}
-                  value={priceRange}
-                  onValueChange={(value: [number, number]) =>
-                    setPriceRange(value)
-                  }
-                  step={1}
-                  range
-                />
+                {minPrice !== null && maxPrice !== null && (
+                  <Slider
+                    minValue={minPrice}
+                    maxValue={maxPrice}
+                    step={1}
+                    value={priceRange ?? [minPrice ?? 0, maxPrice ?? 1000]}
+                    onChange={(v) => {
+                      if (Array.isArray(v)) {
+                        setPriceRange(v as [number, number]);
+                      }
+                    }}
+                    aria-label="Price range slider"
+                  />
+                )}
               </div>
-            </div>
 
-            {/* Apply / Reset Buttons */}
-            <div className="flex justify-between mt-4">
+              {/* Apply Button */}
               <Button
-                onPress={() =>
-                  setAppliedFilters({
-                    categories: selectedCategories,
-                    priceRange,
-                  })
-                }
-              >
-                Apply
-              </Button>
-              <Button
-                variant="outline"
+                color="primary"
                 onPress={() => {
-                  setSelectedCategories([]);
-                  setPriceRange([minPrice, maxPrice]);
-                  setAppliedFilters({
-                    categories: [],
-                    priceRange: [minPrice, maxPrice],
-                  });
-                  setVisibleCount(6);
+                  if (priceRange !== null) {
+                    setAppliedFilters({
+                      categories: selectedCategories,
+                      priceRange,
+                    });
+                    setPage(1);
+                  }
                 }}
+                className="mt-4"
               >
-                Reset
+                Apply Filters
               </Button>
             </div>
           </Card>
 
-          {/* Products Grid */}
+          {/* Products */}
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {visibleProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {products.map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </div>
 
         {/* Load More */}
-        {visibleProducts.length < filteredProducts.length && (
+        {page < totalPages && (
           <div className="flex justify-center mt-8">
-            <Button onPress={() => setVisibleCount((prev) => prev + 6)}>
+            <Button
+              onPress={() => {
+                if (page < totalPages) fetchProducts(page + 1);
+              }}
+            >
               Load More
             </Button>
           </div>
         )}
 
-        {/* No products */}
-        {filteredProducts.length === 0 && (
-          <div className="flex justify-center mt-8 text-gray-500">
-            No products found.
-          </div>
-        )}
+        {/* Error */}
+        {error && <p className="text-red-500 mt-4">{error}</p>}
       </div>
     </div>
   );
 }
-

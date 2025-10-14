@@ -8,10 +8,12 @@ export interface User {
   export interface Product {
     id: number
     title: string
+    slug:string
     description: string
     price: string
     file_path: string
     total_sales:string
+    category_id:number
   }
   
 
