@@ -83,7 +83,7 @@ export default function AppNavbar() {
           <Link href="/products">Products</Link>
         </NavbarItem>
         <NavbarItem>
-          <Link href="/contact-us">Contact Us</Link>
+          <Link href="/contact-us">Contact</Link>
         </NavbarItem>
       </NavbarContent>
 

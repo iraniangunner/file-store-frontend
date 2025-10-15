@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Input, Textarea, Button } from "@heroui/react";
+import {
+  Input,
+  Textarea,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+} from "@heroui/react";
 import toast, { Toaster } from "react-hot-toast";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 
-export function ContactForm() {
+export default function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -59,39 +66,46 @@ export function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Toaster />
-      <Input
-        label="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Your name"
-      />
-      <Input
-        label="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Your email"
-        isRequired
-      />
-      <Textarea
-        label="Message"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        minRows={4}
-        placeholder="Your message..."
-        isRequired
-      />
+    <Card className="w-full max-w-md border border-gray-200 rounded-2xl shadow-2xl bg-gradient-to-br from-gray-50 to-white">
+      <CardHeader className="text-2xl font-semibold text-center text-indigo-700 border-b border-gray-100 pb-4">
+        Contact Us
+      </CardHeader>
+      <CardBody className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Toaster />
+          <Input
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+          />
+          <Input
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Your email"
+            isRequired
+          />
+          <Textarea
+            label="Message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            minRows={4}
+            placeholder="Your message..."
+            isRequired
+          />
 
-      <HCaptcha
-        ref={captchaRef}
-        sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
-        onVerify={setCaptchaToken}
-      />
+          <HCaptcha
+            ref={captchaRef}
+            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+            onVerify={setCaptchaToken}
+          />
 
-      <Button type="submit" color="primary" fullWidth>
-        Send Message
-      </Button>
-    </form>
+          <Button type="submit" color="primary" fullWidth>
+            Send Message
+          </Button>
+        </form>
+      </CardBody>
+    </Card>
   );
 }

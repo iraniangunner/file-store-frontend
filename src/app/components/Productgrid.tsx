@@ -16,7 +16,7 @@ import { Product } from "@/types";
 import { ProductCard } from "@/app/components/Productcard";
 import debounce from "lodash.debounce";
 
-export function ProductGrid() {
+export default function ProductGrid() {
   // --- Parse from URL ---
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [initialCategories, setInitialCategories] = useState<string[]>([]);

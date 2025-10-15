@@ -1,4 +1,12 @@
+import { Metadata } from "next";
 import Link from "next/link";
+
+
+export const metadata: Metadata = {
+  title: "Filerget",
+  description:
+    "Digital files, made simple Buy and download what you need Instantly, Safely, Securely",
+};
 
 
 export default function HomePage() {
