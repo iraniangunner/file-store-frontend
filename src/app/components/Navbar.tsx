@@ -26,6 +26,7 @@ import Link from "next/link";
 export default function AppNavbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const [state, formAction] = useFormState(logoutAction, {
     isSuccess: false,
@@ -57,8 +58,14 @@ export default function AppNavbar() {
 
   if (loading) return <Spinner size="lg" />;
 
+  // helper function to close menu + navigate
+  const handleNav = (path: string) => {
+    setIsMenuOpen(false);
+    router.push(path);
+  };
+
   return (
-    <Navbar>
+    <Navbar onMenuOpenChange={setIsMenuOpen} isMenuOpen={isMenuOpen}>
       {/* Brand + Mobile Toggle */}
       <NavbarContent>
         <NavbarMenuToggle className="sm:hidden" />
@@ -118,21 +125,34 @@ export default function AppNavbar() {
       {/* Mobile menu */}
       <NavbarMenu className="sm:hidden">
         <NavbarMenuItem>
-          <a href="/products" className="w-full block px-4 py-2 text-left">
+          <p
+            className="w-full text-left cursor-pointer hover:text-primary transition-colors"
+            onClick={() => handleNav("/products")}
+          >
             Products
-          </a>
+          </p>
         </NavbarMenuItem>
+
         <NavbarMenuItem>
-          <a href="/contact-us" className="w-full block px-4 py-2 text-left">
+          <p
+            className="w-full text-left cursor-pointer hover:text-primary transition-colors"
+            onClick={() => handleNav("/contact-us")}
+          >
             Contact Us
-          </a>
+          </p>
         </NavbarMenuItem>
 
         {user ? (
           <>
             <NavbarMenuItem>
-              <Link href="/dashboard/orders">Orders</Link>
+              <p
+                className="w-full text-left cursor-pointer hover:text-primary transition-colors"
+                onClick={() => handleNav("/dashboard/orders")}
+              >
+                Orders
+              </p>
             </NavbarMenuItem>
+
             <NavbarMenuItem>
               <form action={formAction}>
                 <Button
@@ -147,7 +167,12 @@ export default function AppNavbar() {
           </>
         ) : (
           <NavbarMenuItem>
-            <Button as={Link} href="/auth" className="w-full" variant="flat">
+            <Button
+              as="button"
+              className="w-full text-left"
+              variant="flat"
+              onClick={() => handleNav("/auth")}
+            >
               Login / Signup
             </Button>
           </NavbarMenuItem>

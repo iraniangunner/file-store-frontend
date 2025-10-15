@@ -74,48 +74,48 @@ export default function ProductDetail() {
     );
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-      <Toaster />
-      <h1 className="text-2xl font-bold">{product.title}</h1>
-      <p className="text-gray-600 my-3">{product.description}</p>
+    <div className="min-h-[80vh] flex justify-center items-center">
+      <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+        <Toaster />
+        <h1 className="text-2xl font-bold">{product.title}</h1>
+        <p className="text-gray-600 my-3">{product.description}</p>
 
-      <div className="mb-4">
-        <Select
-          className="max-w-xs"
-          items={currencies}
-          value={payCurrency}
-          onChange={(e) => setPayCurrency(e.target.value)}
-          label="pay currency"
-          placeholder="Select the currency"
-        >
-        
-          {(currency) => (
-            <SelectItem key={currency.key} textValue={currency.label}>
-              <div className="flex items-center gap-2">              
+        <div className="mb-4">
+          <Select
+            className="max-w-xs"
+            items={currencies}
+            value={payCurrency}
+            onChange={(e) => setPayCurrency(e.target.value)}
+            label="pay currency"
+            placeholder="Select the currency"
+          >
+            {(currency) => (
+              <SelectItem key={currency.key} textValue={currency.label}>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={currency.icon}
+                    alt={currency.label}
+                    width={40}
+                    height={40}
+                    className="rounded-full"
+                  />
+                  <span>{currency.label}</span>
+                </div>
+              </SelectItem>
+            )}
+          </Select>
+        </div>
 
-                <Image
-                  src={currency.icon}
-                  alt={currency.label}
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
-                 <span>{currency.label}</span>
-              </div>
-            </SelectItem>
-          )}
-        </Select>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="text-green-600 font-semibold">${product.price}</div>
-        <Button
-          onClick={handleBuy}
-          className="bg-gray-600 text-white px-4 py-2 rounded cursor-pointer"
-          disabled={creating}
-        >
-          {creating ? <Spinner size="sm" /> : "Buy"}
-        </Button>
+        <div className="flex items-center justify-between">
+          <div className="text-green-600 font-semibold">${product.price}</div>
+          <Button
+            onClick={handleBuy}
+            className="bg-gray-600 text-white px-4 py-2 rounded cursor-pointer"
+            disabled={creating}
+          >
+            {creating ? <Spinner size="sm" /> : "Buy"}
+          </Button>
+        </div>
       </div>
     </div>
   );
