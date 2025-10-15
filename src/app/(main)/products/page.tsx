@@ -17,59 +17,59 @@ import { ProductCard } from "@/app/components/Productcard";
 import debounce from "lodash.debounce";
 
 export default function ProductsPage() {
-  // === Safe URL params (client-only) ===
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => setIsClient(true), []);
-const [initialLoaded, setInitialLoaded] = useState(false);
-const [initialCategories, setInitialCategories] = useState<string[]>([]);
-const [initialSearch, setInitialSearch] = useState("");
-const [initialPage, setInitialPage] = useState(1);
 
-useEffect(() => {
-  if (typeof window !== "undefined") {
-    const searchParams = new URLSearchParams(window.location.search);
-    const cats = searchParams.get("category_id")
-      ? searchParams.get("category_id")!.split(",")
-      : [];
-    const search = searchParams.get("search") || "";
-    const page = Number(searchParams.get("page")) || 1;
+  // --- Parse from URL ---
+  const [initialLoaded, setInitialLoaded] = useState(false);
+  const [initialCategories, setInitialCategories] = useState<string[]>([]);
+  const [initialSearch, setInitialSearch] = useState("");
+  const [initialPage, setInitialPage] = useState(1);
 
-    setInitialCategories(cats);
-    setInitialSearch(search);
-    setInitialPage(page);
-    setInitialLoaded(true);
-  }
-}, []);
-
-  // const initialCategories = searchParams.get("category_id")
-  //   ? searchParams.get("category_id")!.split(",")
-  //   : [];
-  // const initialSearch = searchParams.get("search") || "";
-  // const initialPage = Number(searchParams.get("page")) || 1;
-
-  // === States ===
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const cats = params.get("category_id") ? params.get("category_id")!.split(",") : [];
+      const search = params.get("search") || "";
+      const page = Number(params.get("page")) || 1;
+  
+      setInitialCategories(cats);
+      setInitialSearch(search);
+      setInitialPage(page);
+  
+      // ✅ مهم: state های UI رو هم ست کنیم
+      setSelectedCategories(cats);
+      setSearchInput(search);
+      setSearchQuery(search);
+  
+      setAppliedFilters({
+        categories: cats,
+        priceRange: [0, 0], // بعدا با min/max پر میشه
+      });
+  
+      setInitialLoaded(true);
+    }
+  }, []);
+  
+  // --- States ---
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [searchQuery, setSearchQuery] = useState(initialSearch);
-  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
-  const [page, setPage] = useState(initialPage);
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
-    []
-  );
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [selectedCategories, setSelectedCategories] =
-    useState<string[]>(initialCategories);
+    useState<string[]>([]);
 
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
 
   const [appliedFilters, setAppliedFilters] = useState({
-    categories: initialCategories,
+    categories: [] as string[],
     priceRange: [0, 0] as [number, number],
   });
 
@@ -91,31 +91,37 @@ useEffect(() => {
     return () => controller.abort();
   }, []);
 
-  // === Fetch price range from server ===
+  // === Fetch price range ===
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       try {
         const res = await fetch(
           "https://filerget.com/api/products/meta/price-range",
-          {
-            signal: controller.signal,
-          }
+          { signal: controller.signal }
         );
         if (!res.ok) throw new Error("Failed to fetch price range");
         const data = await res.json();
         const min = Number(data.min_price) || 0;
         const max = Number(data.max_price) || 1000;
+  
         setMinPrice(min);
         setMaxPrice(max);
-        setPriceRange([min, max]);
-        setAppliedFilters((prev) => ({ ...prev, priceRange: [min, max] }));
+  
+        // ✅ اگر URL شامل price بود، اون رو استفاده کنیم
+        const params = new URLSearchParams(window.location.search);
+        const urlMin = Number(params.get("min_price")) || min;
+        const urlMax = Number(params.get("max_price")) || max;
+  
+        setPriceRange([urlMin, urlMax]);
+        setAppliedFilters((prev) => ({ ...prev, priceRange: [urlMin, urlMax] }));
       } catch (err) {
         if ((err as any).name !== "AbortError") console.error(err);
       }
     })();
     return () => controller.abort();
   }, []);
+  
 
   // === Debounced search ===
   const searchDebouncedRef = useRef(
@@ -137,6 +143,8 @@ useEffect(() => {
       if (minPrice === null || maxPrice === null || priceRange === null) return;
 
       const controller = new AbortController();
+      const signal = controller.signal;
+
       try {
         setLoading(true);
 
@@ -154,7 +162,7 @@ useEffect(() => {
           params.toString() ? `?${params.toString()}` : ""
         }`;
 
-        const res = await fetch(url, { signal: controller.signal });
+        const res = await fetch(url, { signal });
         if (!res.ok) throw new Error(`Fetch failed with status ${res.status}`);
         const data = await res.json();
 
@@ -167,16 +175,15 @@ useEffect(() => {
         setPage(data.current_page);
         setTotalPages(data.last_page);
 
-        // // update URL
-        if (isClient) {
-          const currentUrl = window.location.search;
+        // ✅ فقط زمانی URL رو آپدیت کن که مقدار جدیدی باشه
+        if (typeof window !== "undefined") {
           const newQuery = params.toString();
-          const newUrl = newQuery ? `?${newQuery}` : "";
-          if (currentUrl !== newUrl) {
-            window.history.replaceState(null, "", `/products${newUrl}`);
+          const current = window.location.search.slice(1);
+          if (current !== newQuery) {
+            const newUrl = newQuery ? `/products?${newQuery}` : `/products`;
+            window.history.replaceState({}, "", newUrl);
           }
         }
-        
 
         setError("");
       } catch (err) {
@@ -190,23 +197,22 @@ useEffect(() => {
 
       return () => controller.abort();
     },
-    [searchQuery, appliedFilters, minPrice, maxPrice, priceRange, isClient]
+    [searchQuery, appliedFilters, minPrice, maxPrice, priceRange]
   );
 
-  // === Fetch products when filters/search change ===
+  // === Trigger fetch on ready ===
   useEffect(() => {
-    fetchProducts(1);
-  }, [appliedFilters, searchQuery, minPrice, maxPrice]);
+    if (initialLoaded && appliedFilters.priceRange[1] !== 0) {
+      fetchProducts(1);
+    }
+  }, [appliedFilters, searchQuery, minPrice, maxPrice, initialLoaded]);
 
-  // --- UI ---
-  // if (loading && !products.length)
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       <Skeleton className="h-10 w-80" />
-  //     </div>
-  //   );
-
-  if (!initialLoaded) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  if (!initialLoaded)
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
 
   return (
     <div className="min-h-screen">
@@ -305,7 +311,7 @@ useEffect(() => {
                     setPage(1);
                   }
                 }}
-                className="mt-4"
+                className="mt-4 w-full"
               >
                 Apply Filters
               </Button>
