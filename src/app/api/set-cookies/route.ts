@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 
   const response = NextResponse.json({ success: true });
 
-  // بروز رسانی cookie ها
+ // بروز رسانی cookie ها
   const cookieBase = {
     httpOnly: true,
     sameSite: "lax" as const,

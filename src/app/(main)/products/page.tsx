@@ -9,7 +9,7 @@ import {
   CheckboxGroup,
   Slider,
   Divider,
-  Skeleton,
+  Pagination,
 } from "@heroui/react";
 import { DollarSign, Filter, Package, RotateCcw, Search } from "lucide-react";
 import { Product } from "@/types";
@@ -17,7 +17,6 @@ import { ProductCard } from "@/app/components/Productcard";
 import debounce from "lodash.debounce";
 
 export default function ProductsPage() {
-
   // --- Parse from URL ---
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [initialCategories, setInitialCategories] = useState<string[]>([]);
@@ -27,28 +26,30 @@ export default function ProductsPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const cats = params.get("category_id") ? params.get("category_id")!.split(",") : [];
+      const cats = params.get("category_id")
+        ? params.get("category_id")!.split(",")
+        : [];
       const search = params.get("search") || "";
       const page = Number(params.get("page")) || 1;
-  
+
       setInitialCategories(cats);
       setInitialSearch(search);
       setInitialPage(page);
-  
-      // ✅ مهم: state های UI رو هم ست کنیم
+      setPage(page);
+
       setSelectedCategories(cats);
       setSearchInput(search);
       setSearchQuery(search);
-  
+
       setAppliedFilters({
         categories: cats,
-        priceRange: [0, 0], // بعدا با min/max پر میشه
+        priceRange: [0, 0], // بعداً با min/max پر می‌شود
       });
-  
+
       setInitialLoaded(true);
     }
   }, []);
-  
+
   // --- States ---
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,9 +61,10 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-  const [selectedCategories, setSelectedCategories] =
-    useState<string[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    []
+  );
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
@@ -104,37 +106,36 @@ export default function ProductsPage() {
         const data = await res.json();
         const min = Number(data.min_price) || 0;
         const max = Number(data.max_price) || 1000;
-  
+
         setMinPrice(min);
         setMaxPrice(max);
-  
-        // ✅ اگر URL شامل price بود، اون رو استفاده کنیم
+
         const params = new URLSearchParams(window.location.search);
         const urlMin = Number(params.get("min_price")) || min;
         const urlMax = Number(params.get("max_price")) || max;
-  
+
         setPriceRange([urlMin, urlMax]);
-        setAppliedFilters((prev) => ({ ...prev, priceRange: [urlMin, urlMax] }));
+        setAppliedFilters((prev) => ({
+          ...prev,
+          priceRange: [urlMin, urlMax],
+        }));
       } catch (err) {
         if ((err as any).name !== "AbortError") console.error(err);
       }
     })();
     return () => controller.abort();
   }, []);
-  
 
   // === Debounced search ===
   const searchDebouncedRef = useRef(
     debounce((value: string) => {
       setSearchQuery(value);
-      setPage(1);
+      setPage(1); // هر جستجو صفحه را 1 می‌کند
     }, 500)
   );
 
   useEffect(() => {
-    return () => {
-      searchDebouncedRef.current.cancel();
-    };
+    return () => searchDebouncedRef.current.cancel();
   }, []);
 
   // === Fetch products ===
@@ -166,16 +167,10 @@ export default function ProductsPage() {
         if (!res.ok) throw new Error(`Fetch failed with status ${res.status}`);
         const data = await res.json();
 
-        if (pageNumber === 1) {
-          setProducts(data.data);
-        } else {
-          setProducts((prev) => [...prev, ...data.data]);
-        }
-
+        setProducts(data.data);
         setPage(data.current_page);
         setTotalPages(data.last_page);
 
-        // ✅ فقط زمانی URL رو آپدیت کن که مقدار جدیدی باشه
         if (typeof window !== "undefined") {
           const newQuery = params.toString();
           const current = window.location.search.slice(1);
@@ -200,12 +195,12 @@ export default function ProductsPage() {
     [searchQuery, appliedFilters, minPrice, maxPrice, priceRange]
   );
 
-  // === Trigger fetch on ready ===
+  // === Trigger fetch on ready or filter/search change ===
   useEffect(() => {
     if (initialLoaded && appliedFilters.priceRange[1] !== 0) {
-      fetchProducts(1);
+      fetchProducts(page);
     }
-  }, [appliedFilters, searchQuery, minPrice, maxPrice, initialLoaded]);
+  }, [appliedFilters, searchQuery, minPrice, maxPrice, initialLoaded, page]);
 
   if (!initialLoaded)
     return (
@@ -247,6 +242,7 @@ export default function ProductsPage() {
                     setSelectedCategories([]);
                     setPriceRange(newRange);
                     setAppliedFilters({ categories: [], priceRange: newRange });
+                    // setPage(1);
                   }
                 }}
                 className="text-gray-500 text-sm flex items-center gap-1"
@@ -326,16 +322,15 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Load More */}
-        {page < totalPages && (
+        {/* Pagination */}
+        {products.length > 0 && totalPages > 1 && (
           <div className="flex justify-center mt-8">
-            <Button
-              onPress={() => {
-                if (page < totalPages) fetchProducts(page + 1);
-              }}
-            >
-              Load More
-            </Button>
+            <Pagination
+              total={totalPages}
+              page={page}
+              onChange={setPage}
+              showControls
+            />
           </div>
         )}
 
