@@ -222,13 +222,7 @@ export default function AuthPage() {
               />
 
               <SubmitButton labelPending="Signing up..." labelIdle="Sign up" />
-              {/* <Button
-                onClick={handleGoogleLogin}
-                variant="flat"
-                className="w-full cursor-pointer"
-              >
-                Sign up with Google
-              </Button> */}
+              
               <Button
                 onClick={handleGoogleLogin}
                 variant="flat"

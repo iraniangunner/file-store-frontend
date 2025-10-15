@@ -1,27 +1,32 @@
 "use client";
-import Link from "next/link";
 import { useState, useEffect } from "react";
-import { User } from "../../types";
 import { useRouter } from "next/navigation";
 import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
   Button,
-  Spinner,
   Dropdown,
-  DropdownItem,
   DropdownTrigger,
   DropdownMenu,
+  DropdownItem,
 } from "@heroui/react";
 import api from "../../lib/api";
 import { logoutAction } from "../_actions/logout";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormState } from "react-dom";
 import { InternalAxiosRequestConfig } from "axios";
+import { User } from "../../types";
+import { Spinner } from "@heroui/react";
+import Link from "next/link";
 
-export default function Navbar() {
+export default function AppNavbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  // فرم state logout
   const [state, formAction] = useFormState(logoutAction, {
     isSuccess: false,
     error: "",
@@ -33,18 +38,16 @@ export default function Navbar() {
         const res = await api.get("/auth/me", {
           requiresAuth: true,
         } as InternalAxiosRequestConfig);
-
         setUser(res.data.user);
-        setLoading(false);
       } catch {
         setUser(null);
+      } finally {
         setLoading(false);
       }
     };
     fetchUser();
   }, []);
 
-  // بعد از logout موفق -> ریدایرکت
   useEffect(() => {
     if (state.isSuccess) {
       setUser(null);
@@ -55,45 +58,101 @@ export default function Navbar() {
   if (loading) return <Spinner size="lg" />;
 
   return (
-    <nav className="bg-white shadow px-4 py-3 mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-        <Link href="/" className="font-bold text-lg">
-        <span className="text-[#3B9FE8]">Filer</span>
+    <Navbar>
+      {/* Brand + Mobile Toggle */}
+      <NavbarContent>
+        <NavbarMenuToggle className="sm:hidden" />
+        <NavbarBrand>
+          <p className="font-bold text-inherit text-xl flex items-center gap-1">
+            <span className="text-[#3B9FE8]">Filer</span>
             <span className="text-[#3D3D8F]">Get</span>
-        </Link>
-      </div>
+          </p>
+        </NavbarBrand>
+      </NavbarContent>
 
+      {/* Desktop links */}
+      <NavbarContent className="hidden sm:flex gap-4" justify="start">
+        <NavbarItem>
+          <Link href="/products">Products</Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link href="/contact-us">Contact Us</Link>
+        </NavbarItem>
+      </NavbarContent>
 
-      {user ? (
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered">Hi {user.name}</Button>
-          </DropdownTrigger>
-          <DropdownMenu aria-label="User Menu">
-            <DropdownItem key={"orders"}>
-              <Link href="/dashboard/orders" className="w-full block">
-                Orders
-              </Link>
-            </DropdownItem>
-            <DropdownItem key={"logout"}>
+      {/* Desktop Auth */}
+      <NavbarContent className="hidden sm:flex" justify="end">
+        {user ? (
+          <Dropdown>
+            <DropdownTrigger>
+              <Button variant="flat">Hi {user.name}</Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="User Menu">
+              <DropdownItem key="orders">
+                <Link href="/dashboard/orders" className="w-full block">
+                  Orders
+                </Link>
+              </DropdownItem>
+              <DropdownItem key="logout">
+                <form action={formAction}>
+                  <Button
+                    type="submit"
+                    className="w-full text-left"
+                    variant="flat"
+                  >
+                    Logout
+                  </Button>
+                </form>
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        ) : (
+          <NavbarItem>
+            <Button as={Link} href="/auth" variant="flat">
+              Login / Signup
+            </Button>
+          </NavbarItem>
+        )}
+      </NavbarContent>
+
+      {/* Mobile menu */}
+      <NavbarMenu className="sm:hidden">
+        <NavbarMenuItem>
+          <a href="/products" className="w-full block px-4 py-2 text-left">
+            Products
+          </a>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <a href="/contact-us" className="w-full block px-4 py-2 text-left">
+            Contact Us
+          </a>
+        </NavbarMenuItem>
+
+        {user ? (
+          <>
+            <NavbarMenuItem>
+              <Link href="/dashboard/orders">Orders</Link>
+            </NavbarMenuItem>
+            <NavbarMenuItem>
               <form action={formAction}>
-                <Button type="submit" className="w-full text-left">
+                <Button
+                  type="submit"
+                  className="w-full text-left"
+                  variant="flat"
+                >
                   Logout
                 </Button>
               </form>
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
-      ) : (
-        <div className="flex gap-2">
-          <Link
-            href="/auth"
-            className="text-sm px-3 py-2 bg-blue-500 text-white rounded"
-          >
-            Login / Signup
-          </Link>
-        </div>
-      )}
-    </nav>
+            </NavbarMenuItem>
+          </>
+        ) : (
+          <NavbarMenuItem>
+            <Button as={Link} href="/auth" className="w-full" variant="flat">
+              Login / Signup
+            </Button>
+          </NavbarMenuItem>
+        )}
+      </NavbarMenu>
+    </Navbar>
   );
 }

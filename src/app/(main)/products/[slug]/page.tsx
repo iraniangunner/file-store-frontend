@@ -45,10 +45,6 @@ export default function ProductDetail() {
     if (!product) return;
     setCreating(true);
     try {
-      // const res = await api.post("/orders", {
-      //   product_id: product.id,
-      //   pay_currency: "usdc",
-      // });
       const res = await api.post(
         "/orders",
         {
@@ -92,14 +88,10 @@ export default function ProductDetail() {
           label="pay currency"
           placeholder="Select the currency"
         >
-          {/* {(currency) => <SelectItem>
-
-            {currency.label}
-            </SelectItem>} */}
+        
           {(currency) => (
             <SelectItem key={currency.key} textValue={currency.label}>
-              <div className="flex items-center gap-2">
-               
+              <div className="flex items-center gap-2">              
 
                 <Image
                   src={currency.icon}

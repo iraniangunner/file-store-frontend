@@ -15,7 +15,7 @@ import { Providers } from "./providers";
 // });
 
 export const metadata: Metadata = {
-  title: "filerget",
+  title: "Filerget",
   description:
     "Digital files, made simple Buy and download what you need Instantly, Safely, Securely",
 };
