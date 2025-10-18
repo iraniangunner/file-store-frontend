@@ -9,21 +9,21 @@ export async function POST(req: Request) {
 
   const response = NextResponse.json({ success: true });
 
- // بروز رسانی cookie ها
-  // const cookieBase = {
-  //   httpOnly: true,
-  //   sameSite: "lax" as const,
-  //   path: "/",
-  //   secure: false,
-  // };
-
-    const cookieBase = {
+// بروز رسانی cookie ها
+  const cookieBase = {
     httpOnly: true,
-    sameSite: "none" as const,
+    sameSite: "lax" as const,
     path: "/",
-    secure: true,
-    domain: ".filerget.com",
+    secure: false,
   };
+
+  //   const cookieBase = {
+  //   httpOnly: true,
+  //   sameSite: "none" as const,
+  //   path: "/",
+  //   secure: true,
+  //   domain: ".filerget.com",
+  // };
 
   const expires_At = Date.now() + expiresAt * 1000;
 

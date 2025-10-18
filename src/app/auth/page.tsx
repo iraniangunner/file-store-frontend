@@ -115,6 +115,12 @@ export default function AuthPage() {
   //   }
   // }, [registerState?.isSuccess]);
 
+
+  useEffect(() => {
+    if (registerState?.isSuccess) {
+      router.push(`/verify-email?email=${encodeURIComponent(registerEmail)}`);
+    }
+  }, [registerState?.isSuccess, registerEmail]);
   
 
   // Handle Google OAuth login popup
@@ -214,7 +220,9 @@ export default function AuthPage() {
                 isRequired
                 label="Email"
                 name="email"
+                value={registerEmail}
                 placeholder="Enter your email"
+                onChange={(e) => setRegisterEmail(e.target.value)}
                 type="email"
               />
               <Input

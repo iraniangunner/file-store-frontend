@@ -23,20 +23,20 @@ export async function POST(req:Request) {
 
   
 // بروز رسانی cookie ها
-  // const cookieBase = {
-  //   httpOnly: true,
-  //   sameSite: "lax" as const,
-  //   path: "/",
-  //   secure: false,
-  // };
-
   const cookieBase = {
-  httpOnly: true,
-  sameSite: "none" as const,
-  path: "/",
-  secure: true,
-  domain: ".filerget.com",
-};
+    httpOnly: true,
+    sameSite: "lax" as const,
+    path: "/",
+    secure: false,
+  };
+
+//   const cookieBase = {
+//   httpOnly: true,
+//   sameSite: "none" as const,
+//   path: "/",
+//   secure: true,
+//   domain: ".filerget.com",
+// };
 
   const expiresAt = Date.now() + data.expires_in * 1000;
 
