@@ -26,8 +26,8 @@ export default function ProductGrid() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const cats = params.get("category_id")
-        ? params.get("category_id")!.split(",")
+      const cats = params.get("category_ids")
+        ? params.get("category_ids")!.split(",")
         : [];
       const search = params.get("search") || "";
       const page = Number(params.get("page")) || 1;
@@ -152,7 +152,7 @@ export default function ProductGrid() {
         const params = new URLSearchParams();
         if (searchQuery) params.append("search", searchQuery);
         if (appliedFilters.categories.length)
-          params.append("category_id", appliedFilters.categories.join(","));
+          params.append("category_ids", appliedFilters.categories.join(","));
         if (appliedFilters.priceRange[0] > minPrice)
           params.append("min_price", appliedFilters.priceRange[0].toString());
         if (appliedFilters.priceRange[1] < maxPrice)

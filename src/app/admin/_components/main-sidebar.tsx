@@ -45,6 +45,12 @@ export function MainSideBar() {
       icon: <Settings size={18} />,
       href: "/admin/categories",
     },
+
+    {
+      name: "Comments",
+      icon: <Settings size={18} />,
+      href: "/admin/comments",
+    },
   ];
 
   return (

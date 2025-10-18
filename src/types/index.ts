@@ -13,8 +13,16 @@ export interface User {
     price: string
     file_path: string
     total_sales:string
-    category_id:number
+    categories: String[]
   }
+
+  
+  export interface Contact {
+    id: number;
+    name:string;
+    message:string
+  }
+
   
 
  export interface Order {

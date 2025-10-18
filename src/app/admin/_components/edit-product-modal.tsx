@@ -37,13 +37,13 @@ export function EditProductModal({
     description: "",
     price: "",
     file: null as File | null,
-    categoryId: "",
+    category_ids: [] as string[], // تغییر به چند دسته
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Load categories
+  // بارگذاری دسته‌ها
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -56,7 +56,7 @@ export function EditProductModal({
     fetchCategories();
   }, []);
 
-  // Initialize form when product changes
+  // مقداردهی اولیه فرم با محصول فعلی
   useEffect(() => {
     if (product) {
       setForm({
@@ -64,7 +64,7 @@ export function EditProductModal({
         description: product.description || "",
         price: product.price?.toString() || "",
         file: null,
-        categoryId: product.category_id?.toString() || "",
+        category_ids: product.categories?.map((c:any) => String(c.id)) || [],
       });
     }
   }, [product]);
@@ -76,9 +76,8 @@ export function EditProductModal({
 
   const handleSubmit = async () => {
     if (!product) return;
-
-    if (!form.title || !form.description || !form.price) {
-      alert("Please fill in all required fields and select a category.");
+    if (!form.title || !form.description || !form.price || form.category_ids.length === 0) {
+      alert("Please fill in all required fields and select at least one category.");
       return;
     }
 
@@ -88,7 +87,9 @@ export function EditProductModal({
       formData.append("title", form.title);
       formData.append("description", form.description);
       formData.append("price", form.price);
-      formData.append("category_id", form.categoryId);
+
+      // اضافه کردن همه دسته‌ها به فرم دیتا
+      form.category_ids.forEach((id) => formData.append("category_ids[]", id));
 
       if (form.file) formData.append("file", form.file);
 
@@ -108,7 +109,7 @@ export function EditProductModal({
   };
 
   const handleDownload = async () => {
-    if (!product) return;
+    if (!product || !product.file_path) return;
     setIsDownloading(true);
     try {
       const res = await api.get(`/products/${product.id}/download`, {
@@ -158,25 +159,35 @@ export function EditProductModal({
             onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
           />
 
-          {/* Category Dropdown */}
+          {/* چند دسته با checkbox */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
-              Category
+              Categories
             </label>
-            <select
-              value={form.categoryId}
-              onChange={(e) => setForm((p) => ({ ...p, categoryId: e.target.value }))}
-              className="block w-full border rounded-lg p-2 text-sm"
-            >
-              <option value="">Select a category</option>
+            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto border rounded-lg p-2">
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
+                <label key={cat.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    value={cat.id}
+                    checked={form.category_ids.includes(String(cat.id))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setForm((p) => {
+                        const arr = [...p.category_ids];
+                        if (e.target.checked) arr.push(value);
+                        else arr.splice(arr.indexOf(value), 1);
+                        return { ...p, category_ids: arr };
+                      });
+                    }}
+                  />
                   {cat.name}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
 
+          {/* فایل */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
               Upload New File (PDF)

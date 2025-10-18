@@ -68,13 +68,13 @@ export default function AppNavbar() {
     <Navbar onMenuOpenChange={setIsMenuOpen} isMenuOpen={isMenuOpen}>
       {/* Brand + Mobile Toggle */}
       <NavbarContent>
-        <NavbarMenuToggle className="sm:hidden" />
         <NavbarBrand>
           <p className="font-bold text-inherit text-xl flex items-center gap-1">
             <span className="text-[#3B9FE8]">Filer</span>
             <span className="text-[#3D3D8F]">Get</span>
           </p>
         </NavbarBrand>
+        <NavbarMenuToggle className="sm:hidden" />
       </NavbarContent>
 
       {/* Desktop links */}
