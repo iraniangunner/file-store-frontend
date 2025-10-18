@@ -5,20 +5,20 @@ import { cookies } from "next/headers";
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 const HCAPTCHA_SECRET = process.env.NEXT_PUBLIC_HCAPTCHA_SECRET_KEY!;
 
-const cookieBase = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  path: "/",
-  secure: false,
-};
-
 // const cookieBase = {
 //   httpOnly: true,
-//   sameSite: "none" as const,
+//   sameSite: "lax" as const,
 //   path: "/",
-//   secure: true,
-//   domain: ".filerget.com",
+//   secure: false,
 // };
+
+const cookieBase = {
+  httpOnly: true,
+  sameSite: "none" as const,
+  path: "/",
+  secure: true,
+  domain: ".filerget.com",
+};
 
 type LoginResp = {
   access_token: string;

@@ -20,6 +20,18 @@ import HCaptcha from "@hcaptcha/react-hcaptcha";
 import api from "@/lib/api";
 import { InternalAxiosRequestConfig } from "axios";
 
+
+type RegisterResponse = {
+  isSuccess: boolean;
+  error: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  message: string;
+};
+
 function SubmitButton({
   labelPending,
   labelIdle,
@@ -66,6 +78,8 @@ export default function AuthPage() {
     error: "",
   });
 
+  const [registerEmail, setRegisterEmail] = useState("");
+
   // Handle login success
   useEffect(() => {
     if (loginState?.isSuccess) {
@@ -88,11 +102,20 @@ export default function AuthPage() {
   }, [loginState?.isSuccess]);
 
   // Handle signup success
-  useEffect(() => {
-    if (registerState?.isSuccess) {
-      window.location.href = "/dashboard/orders";
-    }
-  }, [registerState?.isSuccess]);
+  // useEffect(() => {
+  //   if (registerState?.isSuccess) {
+  //     window.location.href = "/dashboard/orders";
+  //   }
+  // }, [registerState?.isSuccess]);
+
+  // useEffect(() => {
+  //   if (registerState?.isSuccess) {
+  //     const email = (registerFormAction as any).formData.get("email");
+  //     router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+  //   }
+  // }, [registerState?.isSuccess]);
+
+  
 
   // Handle Google OAuth login popup
   const handleGoogleLogin = () => {
