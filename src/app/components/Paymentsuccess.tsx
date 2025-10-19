@@ -1,11 +1,11 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import api from "../../../lib/api";
-import { Order } from "../../../types";
+import api from "../../lib/api";
+import { Order } from "../../types";
 import { InternalAxiosRequestConfig } from "axios";
 
-export default function PaymentSuccessClientPage() {
+export default function PaymentSuccess() {
   const params = useSearchParams();
   const router = useRouter();
   const orderId = params.get("order_id");
