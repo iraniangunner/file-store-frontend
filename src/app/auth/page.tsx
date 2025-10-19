@@ -20,7 +20,6 @@ import HCaptcha from "@hcaptcha/react-hcaptcha";
 import api from "@/lib/api";
 import { InternalAxiosRequestConfig } from "axios";
 
-
 function SubmitButton({
   labelPending,
   labelIdle,
@@ -96,7 +95,6 @@ export default function AuthPage() {
       router.push(`/verify-email?email=${encodeURIComponent(registerEmail)}`);
     }
   }, [registerState?.isSuccess, registerEmail]);
-  
 
   // Handle Google OAuth login popup
   const handleGoogleLogin = () => {
@@ -165,6 +163,12 @@ export default function AuthPage() {
                 name="h-captcha-response"
                 value={loginCaptchaToken ?? ""}
               />
+
+              <p className="text-sm text-blue-500 cursor-pointer hover:underline">
+                <Link size="sm" onPress={() => router.push("/forgot-password")}>
+                  Forgot Password?
+                </Link>
+              </p>
               <SubmitButton labelPending="Login..." labelIdle="Login" />
 
               {loginState?.error && (
@@ -228,7 +232,7 @@ export default function AuthPage() {
               />
 
               <SubmitButton labelPending="Signing up..." labelIdle="Sign up" />
-              
+
               <Button
                 onClick={handleGoogleLogin}
                 variant="flat"

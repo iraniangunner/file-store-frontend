@@ -226,7 +226,7 @@ export default function ProductGrid() {
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row items-start gap-8">
           {/* Sidebar */}
           <Card className="w-full sm:w-80 lg:w-64 p-5 border rounded-2xl shadow-sm bg-white/80 backdrop-blur-sm self-start lg:sticky lg:top-20">
             <div className="flex items-center justify-between mb-4">
