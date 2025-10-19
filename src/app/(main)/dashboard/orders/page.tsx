@@ -46,19 +46,19 @@ export default function OrdersPage() {
     try {
       const res = await api.get(`/orders/${order.id}/download`, {
         responseType: "blob",
-        onDownloadProgress: (e:any) => {
+        onDownloadProgress: (e: any) => {
           const percent = Math.round((e.loaded * 100) / (e.total || 1));
           setProgress((prev) => ({ ...prev, [order.id]: percent }));
         },
-        requiresAuth: true,
+        requiresAuth: true, // همون رو نگه داشتیم
       } as any);
 
-      const blob = new Blob([res.data], { type: "application/pdf" });
+      const blob = new Blob([res.data], { type: res.headers["content-type"] || "application/octet-stream" });
       const url = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = order.product?.title || "file.pdf";
+      a.download = order.product?.title || "file";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -66,7 +66,7 @@ export default function OrdersPage() {
 
       // بروزرسانی download_used بعد از دانلود موفق
       setOrders((prevOrders) =>
-        prevOrders.map((o:any) =>
+        prevOrders.map((o: any) =>
           o.id === order.id
             ? { ...o, download_used: o.download_used + 1 }
             : o
@@ -74,7 +74,7 @@ export default function OrdersPage() {
       );
       setProgress((prev) => ({ ...prev, [order.id]: 100 }));
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Download failed");
       setProgress((prev) => ({ ...prev, [order.id]: 0 }));
     }
   }
@@ -82,7 +82,7 @@ export default function OrdersPage() {
   if (loading)
     return (
       <div className="flex justify-center items-center min-h-[80vh]">
-        <Spinner />
+        <Spinner size="lg" />
       </div>
     );
 
@@ -95,7 +95,7 @@ export default function OrdersPage() {
         </CardHeader>
         <CardBody>
           {orders.length === 0 ? (
-            <p>No orders found.</p>
+            <p className="text-gray-600">You have not purchased any products yet.</p>
           ) : (
             <Table aria-label="Orders List">
               <TableHeader>
@@ -107,24 +107,24 @@ export default function OrdersPage() {
                 <TableColumn>Download</TableColumn>
               </TableHeader>
               <TableBody>
-                {orders.map((order:any) => {
+                {orders.map((order: any) => {
+                  // فقط سفارش‌های confirmed قابل دانلود
                   const canDownload =
-                    order.download_allowed > order.download_used &&
-                    order.download_expires_at &&
-                    new Date(order.download_expires_at) > new Date();
+                    order.status === "confirmed" &&
+                    (order.download_allowed === 0 || order.download_allowed > order.download_used) &&
+                    (!order.download_expires_at || new Date(order.download_expires_at) > new Date());
 
                   return (
                     <TableRow key={order.id}>
                       <TableCell>{order.id}</TableCell>
                       <TableCell>{order.product?.title}</TableCell>
                       <TableCell>
-                        {order.amount} {order.currency.toUpperCase()}
+                        {order.amount === 0 ? "Free" : `${order.amount} ${order.currency.toUpperCase()}`}
                       </TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded text-xs ${
-                            order.status === "finished" ||
-                            order.status === "confirmed"
+                            ["finished", "confirmed"].includes(order.status)
                               ? "bg-green-100 text-green-800"
                               : order.status === "waiting"
                               ? "bg-yellow-100 text-yellow-800"
@@ -144,23 +144,15 @@ export default function OrdersPage() {
                               size="sm"
                               onClick={() => downloadOrderFile(order)}
                             >
-                              Download ({order.download_allowed - order.download_used} left)
+                              Download {order.download_allowed !== 0 && `(${order.download_allowed - order.download_used} left)`}
                             </Button>
-                            {progress[order.id] !== undefined &&
-                              progress[order.id] < 100 && (
-                                <Progress
-                                  value={progress[order.id]}
-                                  color="primary"
-                                  size="sm"
-                                  className="mt-1"
-                                />
-                              )}
+                            {progress[order.id] !== undefined && progress[order.id] < 100 && (
+                              <Progress value={progress[order.id]} color="primary" size="sm" className="mt-1" />
+                            )}
                           </>
                         ) : (
                           <span className="text-gray-400 text-xs">
-                            {order.download_allowed === 0
-                              ? "No downloads allowed"
-                              : "Expired"}
+                            {order.download_allowed !== 0 ? "Expired" : "No downloads allowed"}
                           </span>
                         )}
                       </TableCell>

@@ -53,8 +53,16 @@ export default function ProductDetail() {
         },
         { requiresAuth: true } as InternalAxiosRequestConfig
       );
-      const url = res.data.invoice_url;
-      if (url) window.location.href = url;
+
+      if (Number(product.price) === 0) {
+        // محصول رایگان: هدایت به داشبورد سفارشات
+        toast.success("Order created successfully!");
+        window.location.href = "/dashboard/orders";
+      } else {
+        // محصول پولی: هدایت به لینک فاکتور
+        const url = res.data.invoice_url;
+        if (url) window.location.href = url;
+      }
     } catch (err: any) {
       if (err.response?.status === 401) {
         toast.error("Please login first");
@@ -80,40 +88,51 @@ export default function ProductDetail() {
         <h1 className="text-2xl font-bold">{product.title}</h1>
         <p className="text-gray-600 my-3">{product.description}</p>
 
-        <div className="mb-4">
-          <Select
-            className="max-w-xs"
-            items={currencies}
-            value={payCurrency}
-            onChange={(e) => setPayCurrency(e.target.value)}
-            label="pay currency"
-            placeholder="Select the currency"
-          >
-            {(currency) => (
-              <SelectItem key={currency.key} textValue={currency.label}>
-                <div className="flex items-center gap-2">
-                  <Image
-                    src={currency.icon}
-                    alt={currency.label}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                  <span>{currency.label}</span>
-                </div>
-              </SelectItem>
-            )}
-          </Select>
-        </div>
+        {/* فقط وقتی محصول پولی است نمایش بده */}
+        {Number(product.price) > 0 && (
+          <div className="mb-4">
+            <Select
+              className="max-w-xs"
+              items={currencies}
+              value={payCurrency}
+              onChange={(e) => setPayCurrency(e.target.value)}
+              label="Pay currency"
+              placeholder="Select the currency"
+            >
+              {(currency) => (
+                <SelectItem key={currency.key} textValue={currency.label}>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={currency.icon}
+                      alt={currency.label}
+                      width={40}
+                      height={40}
+                      className="rounded-full"
+                    />
+                    <span>{currency.label}</span>
+                  </div>
+                </SelectItem>
+              )}
+            </Select>
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
-          <div className="text-green-600 font-semibold">${product.price}</div>
+          <div className="text-green-600 font-semibold">
+            {Number(product.price) === 0 ? "Free" : `$${product.price}`}
+          </div>
           <Button
             onClick={handleBuy}
             className="bg-gray-600 text-white px-4 py-2 rounded cursor-pointer"
             disabled={creating}
           >
-            {creating ? <Spinner size="sm" /> : "Buy"}
+            {creating ? (
+              <Spinner size="sm" />
+            ) : Number(product.price) === 0 ? (
+              "Get for Free"
+            ) : (
+              "Buy"
+            )}
           </Button>
         </div>
       </div>
