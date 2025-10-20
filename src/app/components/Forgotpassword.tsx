@@ -1,11 +1,8 @@
 "use client";
-
-import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Card, CardBody, Input } from "@heroui/react";
+import { Card, CardBody, Input, Button } from "@heroui/react";
 import { useFormState, useFormStatus } from "react-dom";
-import { resetPasswordAction } from "@/app/_actions/reset-password";
-import { Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { forgotPasswordAction } from "@/app/_actions/forgot-password";
+import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 
@@ -30,17 +27,9 @@ function SubmitButton({
   );
 }
 
-// Main Reset Password Page
-export default function ResetPassword() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const emailParam = searchParams.get("email") ?? "";
-  const tokenParam = searchParams.get("token") ?? "";
-
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-
-  const [formState, formAction] = useFormState(resetPasswordAction, {
+// Main Forgot Password Page
+export default function ForgotPassword() {
+  const [formState, formAction] = useFormState(forgotPasswordAction, {
     isSuccess: false,
     error: "",
   });
@@ -56,11 +45,11 @@ export default function ResetPassword() {
               </div>
               <div className="space-y-3">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                  Password Reset Successfully
+                  Check Your Email
                 </h2>
                 <p className="text-muted-foreground text-base leading-relaxed max-w-sm">
-                  Your password has been updated. You can now log in with your
-                  new password.
+                  We've sent a password reset link to your email address. Please
+                  check your inbox and follow the instructions.
                 </p>
               </div>
               <Link href="/auth" className="w-full mt-2">
@@ -68,7 +57,8 @@ export default function ResetPassword() {
                   className="w-full bg-foreground text-background hover:bg-foreground/90 font-medium h-12"
                   size="lg"
                 >
-                  Continue to Login
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Login
                 </Button>
               </Link>
             </div>
@@ -86,78 +76,33 @@ export default function ResetPassword() {
             {/* Header Section */}
             <div className="space-y-3 text-center">
               <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto">
-                <Lock className="w-7 h-7 text-foreground" />
+                <Mail className="w-7 h-7 text-foreground" />
               </div>
               <div className="space-y-2">
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground text-balance">
-                  Reset Your Password
+                  Forgot Password?
                 </h1>
                 <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-                  Enter your new password below. Make sure it's strong and
-                  secure.
+                  No worries! Enter your email address and we'll send you a link
+                  to reset your password.
                 </p>
               </div>
             </div>
 
             {/* Form Section */}
             <form action={formAction} className="flex flex-col gap-5 mt-2">
-              {/* Hidden fields for email and token */}
-              <input type="hidden" name="email" value={emailParam} />
-              <input type="hidden" name="token" value={tokenParam} />
-
               <Input
-                label="New Password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your new password"
+                label="Email Address"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
                 required
                 classNames={{
                   input: "text-base",
                   inputWrapper: "h-12 border-border/50",
                 }}
                 startContent={
-                  <Lock className="w-4 h-4 text-muted-foreground" />
-                }
-                endContent={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="focus:outline-none"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-                }
-              />
-
-              <Input
-                label="Confirm New Password"
-                name="password_confirmation"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your new password"
-                required
-                classNames={{
-                  input: "text-base",
-                  inputWrapper: "h-12 border-border/50",
-                }}
-                startContent={
-                  <Lock className="w-4 h-4 text-muted-foreground" />
-                }
-                endContent={
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="focus:outline-none"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
+                  <Mail className="w-4 h-4 text-muted-foreground" />
                 }
               />
 
@@ -170,8 +115,8 @@ export default function ResetPassword() {
               )}
 
               <SubmitButton
-                labelIdle="Reset Password"
-                labelPending="Resetting..."
+                labelIdle="Send Reset Link"
+                labelPending="Sending..."
               />
             </form>
 
@@ -181,6 +126,7 @@ export default function ResetPassword() {
                 href="/auth"
                 className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
+                <ArrowLeft className="w-4 h-4" />
                 Back to Login
               </Link>
             </div>

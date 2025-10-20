@@ -33,7 +33,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   // Basic validation
   if (!email || !password) {
-    return { isSuccess: false, error: "نام کاربری و رمز عبور را وارد کنید" };
+    return { isSuccess: false, error: "Enter the username and password" };
   }
 
   if (!token) {
@@ -65,7 +65,29 @@ export async function loginAction(prevState: any, formData: FormData) {
     });
 
     if (!res.ok) {
-      return { isSuccess: false, error: "Email or password is invalid" };
+      const err = await res.json().catch(() => null);
+
+      if (res.status === 403) {
+        // یعنی ایمیل هنوز تایید نشده
+        return {
+          isSuccess: false,
+          error: err?.message || "Please verify your email before logging in.",
+        };
+      }
+
+      if (res.status === 401) {
+        // یعنی رمز عبور یا ایمیل اشتباهه
+        return {
+          isSuccess: false,
+          error: err?.message || "Email or password is invalid",
+        };
+      }
+
+      // هر خطای دیگر
+      return {
+        isSuccess: false,
+        error: err?.message || "Login failed. Please try again later.",
+      };
     }
 
     const data = (await res.json()) as LoginResp;
