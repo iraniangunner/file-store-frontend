@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, CardBody, InputOtp } from "@heroui/react";
 import { useFormState, useFormStatus } from "react-dom";
 import { verifyEmailAction } from "@/app/_actions/verify-email";
-import { Mail, ShieldCheck, Clock } from "lucide-react";
+import { Mail, ShieldCheck, Clock, RefreshCw } from "lucide-react";
+import api from "@/lib/api";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -27,6 +28,8 @@ export default function VerifyEmail() {
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") ?? "";
   const [otpValue, setOtpValue] = useState("");
+  const [message, setMessage] = useState("");
+  const [resending, setResending] = useState(false);
 
   const [formState, formAction] = useFormState(verifyEmailAction, {
     isSuccess: false,
@@ -40,6 +43,20 @@ export default function VerifyEmail() {
       }, 2000);
     }
   }, [formState.isSuccess, router]);
+
+  // ✅ دکمه‌ی resend
+  const handleResend = async () => {
+    setResending(true);
+    setMessage("");
+    try {
+      await api.post("/resend-verification", { email: emailParam });
+      setMessage("✅ Verification code resent to your email!");
+    } catch {
+      setMessage("❌ Failed to resend verification code.");
+    } finally {
+      setResending(false);
+    }
+  };
 
   if (formState.isSuccess) {
     return (
@@ -55,8 +72,7 @@ export default function VerifyEmail() {
                   Email Verified!
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Your email has been successfully verified. You can now access
-                  all features of your account.
+                  Your email has been successfully verified. You can now log in.
                 </p>
               </div>
               <Button
@@ -107,10 +123,7 @@ export default function VerifyEmail() {
 
             {/* Form */}
             <form action={formAction} className="flex flex-col gap-6">
-              {/* Hidden email field */}
               <input type="hidden" name="email" value={emailParam} />
-
-              {/* OTP Input */}
               <div className="flex flex-col items-center gap-3">
                 <label className="text-sm font-medium text-foreground">
                   Enter verification code
@@ -125,7 +138,6 @@ export default function VerifyEmail() {
                 <input type="hidden" name="token" value={otpValue} />
               </div>
 
-              {/* Error Message */}
               {formState.error && (
                 <div className="p-3 rounded-lg bg-danger/10 border border-danger/20">
                   <p className="text-danger text-sm text-center">
@@ -134,9 +146,27 @@ export default function VerifyEmail() {
                 </div>
               )}
 
-              {/* Submit Button */}
               <SubmitButton />
             </form>
+
+            {/* ✅ resend button + message */}
+            <div className="flex flex-col gap-2 mt-2">
+              <Button
+                variant="flat"
+                onClick={handleResend}
+                disabled={resending}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                {resending ? "Resending..." : "Resend Verification Code"}
+              </Button>
+
+              {message && (
+                <p className="text-center text-sm text-muted-foreground">
+                  {message}
+                </p>
+              )}
+            </div>
           </div>
         </CardBody>
       </Card>

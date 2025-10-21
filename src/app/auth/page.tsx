@@ -69,32 +69,50 @@ export default function AuthPage() {
   const [registerEmail, setRegisterEmail] = useState("");
 
   // Handle login success
-  useEffect(() => {
-    if (loginState?.isSuccess) {
-      (async () => {
-        try {
-          const res = await api.get("/auth/me", {
-            requiresAuth: true,
-          } as InternalAxiosRequestConfig);
-          const user = res.data.user;
-          if (user?.role === "admin") {
-            router.push("/admin");
-          } else {
-            router.push("/dashboard/orders");
-          }
-        } catch {
+  // ✅ وقتی لاگین موفق بود (کاربر تأییدشده)
+useEffect(() => {
+  if (loginState?.isSuccess) {
+    (async () => {
+      try {
+        const res = await api.get("/auth/me", {
+          requiresAuth: true,
+        } as InternalAxiosRequestConfig);
+
+        const user = res.data.user;
+
+        // اگر ایمیل کاربر هنوز تایید نشده
+        if (!user?.email_verified_at) {
+          router.push(`/verify-email?email=${encodeURIComponent(user.email)}`);
+          return;
+        }
+
+        // اگر نقش ادمین داشت
+        if (user?.role === "admin") {
+          router.push("/admin");
+        } else {
           router.push("/dashboard/orders");
         }
-      })();
-    }
-  }, [loginState?.isSuccess]);
+      } catch {
+        router.push("/dashboard/orders");
+      }
+    })();
+  }
+}, [loginState?.isSuccess, router]);
 
-  // Handle signup success
-  useEffect(() => {
-    if (registerState?.isSuccess) {
-      router.push(`/verify-email?email=${encodeURIComponent(registerEmail)}`);
-    }
-  }, [registerState?.isSuccess, registerEmail]);
+// ✅ وقتی ثبت‌نام موفق بود (به verify-email هدایت کن)
+useEffect(() => {
+  if (registerState?.isSuccess) {
+    router.push(`/verify-email?email=${encodeURIComponent(registerEmail)}`);
+  }
+}, [registerState?.isSuccess, registerEmail, router]);
+
+// ✅ وقتی لاگین نیاز به وریفای دارد (بر اساس پاسخ سرور)
+useEffect(() => {
+  if (loginState?.redirectToVerify && loginState.email) {
+    router.push(`/verify-email?email=${encodeURIComponent(loginState.email)}`);
+  }
+}, [loginState?.redirectToVerify, loginState?.email, router]);
+
 
   // Handle Google OAuth login popup
   const handleGoogleLogin = () => {

@@ -20,11 +20,6 @@ const cookieBase = {
 //   domain: ".filerget.com",
 // };
 
-type LoginResp = {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number; // ثانیه
-};
 
 export async function loginAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string;
@@ -64,45 +59,43 @@ export async function loginAction(prevState: any, formData: FormData) {
       body: JSON.stringify({ email, password }),
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null);
+    const data = await res.json().catch(() => ({})); // فقط یه بار parse JSON
 
-      if (res.status === 403) {
-        // یعنی ایمیل هنوز تایید نشده
+    if (!res.ok) {
+      if (res.status === 403 && data.requiresVerification) {
         return {
           isSuccess: false,
-          error: err?.message || "Please verify your email before logging in.",
+          redirectToVerify: true,
+          email: data.email,
+          error: data.message || "Your email is not verified.",
         };
       }
 
       if (res.status === 401) {
-        // یعنی رمز عبور یا ایمیل اشتباهه
         return {
           isSuccess: false,
-          error: err?.message || "Email or password is invalid",
+          error: data.message || "Email or password is invalid",
         };
       }
 
-      // هر خطای دیگر
       return {
         isSuccess: false,
-        error: err?.message || "Login failed. Please try again later.",
+        error: data.message || "Login failed. Please try again later.",
       };
     }
 
-    const data = (await res.json()) as LoginResp;
+    // ✅ اگر به اینجا رسید یعنی لاگین موفق بوده
     const c = await cookies();
 
     const expiresAt = Date.now() + data.expires_in * 1000;
 
-    // ست کردن کوکی‌ها
     c.set("access_token", data.access_token, {
       ...cookieBase,
       maxAge: data.expires_in,
     });
     c.set("refresh_token", data.refresh_token, {
       ...cookieBase,
-      maxAge: 7 * 24 * 60 * 60, // ۷ روز
+      maxAge: 7 * 24 * 60 * 60, // 7 روز
     });
     c.set("expires_at", String(expiresAt), {
       ...cookieBase,
@@ -111,6 +104,6 @@ export async function loginAction(prevState: any, formData: FormData) {
 
     return { isSuccess: true, error: "" };
   } catch (error) {
-    return { isSuccess: false, error: "Login failed" };
+    return { isSuccess: false, error: "Login failed. Please try again later." };
   }
 }
