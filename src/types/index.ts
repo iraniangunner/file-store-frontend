@@ -33,6 +33,7 @@ export interface User {
   status: string;
   created_at: string;
   product: Product;
+  download_used:number;
   // provider_invoice_url?: string
   download_url: string | null;
 };
