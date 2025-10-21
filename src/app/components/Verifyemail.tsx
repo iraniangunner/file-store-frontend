@@ -31,7 +31,7 @@ export default function VerifyEmail() {
   const [otpValue, setOtpValue] = useState("");
   const [message, setMessage] = useState("");
   const [resending, setResending] = useState(false);
-  const [cooldown, setCooldown] = useState(0); // 🕒 countdown timer
+  const [cooldown, setCooldown] = useState(0); 
 
   const [formState, formAction] = useFormState(verifyEmailAction, {
     isSuccess: false,
@@ -45,36 +45,24 @@ export default function VerifyEmail() {
     }
   }, [formState.isSuccess, router]);
 
-  // ✅ تایمر countdown برای دکمه‌ی resend
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const interval = setInterval(() => {
-      setCooldown((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [cooldown]);
-
-  // ✅ تابع resend با کنترل خطا و محدودیت زمانی
   const handleResend = async () => {
     if (resending || cooldown > 0) return;
-
+  
     setResending(true);
     setMessage("");
     try {
       const res = await api.post("/resend-verification", { email: emailParam });
       setMessage("✅ Verification code resent to your email!");
-      setCooldown(60); // 🔒 قفل دکمه برای ۶۰ ثانیه
+  
+      // اگر سرور cooldown داد
+      const match = res.data.message?.match(/(\d+)\s*seconds/);
+      if (match) setCooldown(parseInt(match[1], 10));
+      else setCooldown(60);
     } catch (err: any) {
       if (err.response?.status === 429) {
-        const msg =
-          err.response.data?.message ||
-          "Please wait before requesting another code.";
-        setMessage(`⚠️ ${msg}`);
-
-        // در صورت وجود مدت باقیمانده از سرور، از اون استفاده کن
-        const match = msg.match(/(\d+)\s*seconds/);
-        if (match) setCooldown(parseInt(match[1]));
-        else setCooldown(60);
+        const match = err.response.data?.message?.match(/(\d+)\s*seconds/);
+        if (match) setCooldown(parseInt(match[1], 10));
+        setMessage(err.response.data?.message || "⚠️ Please wait before requesting again.");
       } else {
         setMessage("❌ Failed to resend verification code.");
       }
@@ -82,6 +70,15 @@ export default function VerifyEmail() {
       setResending(false);
     }
   };
+  
+  
+  // ✅ شمارش معکوس cooldown
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown(c => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+  
 
   // ✅ در صورت verify موفق
   if (formState.isSuccess) {
