@@ -54,18 +54,16 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   // ✅ مرحله دوم: لاگین به API
   try {
-    // const guestToken = localStorage.getItem("guest_token");
+
     const res = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-          // ...(guestToken ? { "X-Guest-Token": guestToken } : {}), 
-        // "X-Guest-Token": localStorage.getItem("guest_token") || "",
       },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json().catch(() => ({})); // فقط یه بار parse JSON
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       if (res.status === 403 && data.requiresVerification) {
