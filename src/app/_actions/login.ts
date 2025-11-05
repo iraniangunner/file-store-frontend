@@ -20,7 +20,6 @@ const cookieBase = {
 //   domain: ".filerget.com",
 // };
 
-
 export async function loginAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -38,7 +37,9 @@ export async function loginAction(prevState: any, formData: FormData) {
   try {
     const verifyRes = await fetch("https://hcaptcha.com/siteverify", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       body: `secret=${HCAPTCHA_SECRET}&response=${token}`,
     });
 
@@ -53,9 +54,14 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   // ✅ مرحله دوم: لاگین به API
   try {
+    // const guestToken = localStorage.getItem("guest_token");
     const res = await fetch(`${API_URL}/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+          // ...(guestToken ? { "X-Guest-Token": guestToken } : {}), 
+        // "X-Guest-Token": localStorage.getItem("guest_token") || "",
+      },
       body: JSON.stringify({ email, password }),
     });
 

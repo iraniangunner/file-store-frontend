@@ -1,3 +1,4 @@
+import { CartProvider } from "@/context/CartContext";
 import dynamic from "next/dynamic";
 
 const Navbar = dynamic(() => import("../components/Navbar"), {
@@ -11,8 +12,10 @@ export default function MainLayout({
 }) {
   return (
     <div>
-      <Navbar />
-      {children}
+      <CartProvider>
+        <Navbar />
+        {children}
+      </CartProvider>
     </div>
   );
 }

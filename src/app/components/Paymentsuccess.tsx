@@ -50,8 +50,7 @@ export default function PaymentSuccess() {
     <div className="max-w-md mx-auto bg-white p-6 rounded shadow text-center">
       <h1 className="text-2xl font-bold mb-3">Payment Successful 🎉</h1>
       <p className="mb-2 text-gray-600">
-        Your order has been successfully placed. Status:{" "}
-        <span className="font-semibold">{order.status}</span>
+        Your order has been successfully placed.
       </p>
       <p className="text-gray-500 text-sm mt-2">
         You will be redirected to your dashboard in 5 seconds.

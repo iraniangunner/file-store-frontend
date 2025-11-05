@@ -2,40 +2,48 @@
 import React, { useEffect, useState } from "react";
 import api from "@/lib/api";
 import toast, { Toaster } from "react-hot-toast";
-import { Order } from "@/types";
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Button,
-  Progress,
   Card,
   CardHeader,
   CardBody,
+  CardFooter,
+  Button,
   Spinner,
 } from "@heroui/react";
-import { InternalAxiosRequestConfig } from "axios";
-import { DeleteOrderModal } from "../components/Deleteordermodal"; // مسیر به فایل واقعی شما
+import { Download, ShoppingBag } from "lucide-react";
+
+interface OrderItem {
+  id: number;
+  product_id: number;
+  title: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: number;
+  amount: number;
+  currency: string;
+  status: string;
+  created_at: string;
+  items: OrderItem[];
+}
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState<{ [key: number]: number }>({});
-  const [deleteModalOrder, setDeleteModalOrder] = useState<Order | null>(null);
+  const [downloading, setDownloading] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
+  // 🟢 گرفتن سفارش‌ها
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await api.get<Order[]>("/orders", {
-          requiresAuth: true,
-        } as InternalAxiosRequestConfig);
-        setOrders(res.data);
-      } catch (err: any) {
-        if (err.response?.status === 401) toast.error("Please login first");
-        else toast.error("Something went wrong");
+        const res = await api.get("/orders", { requiresAuth: true } as any);
+        setOrders(res.data.orders || []);
+      } catch {
+        toast.error("Failed to load your orders");
       } finally {
         setLoading(false);
       }
@@ -43,41 +51,75 @@ export default function Orders() {
     fetchOrders();
   }, []);
 
-  const downloadOrderFile = async (order: Order) => {
-    if (!order) return;
-    setProgress((prev) => ({ ...prev, [order.id]: 0 }));
+  // 🟢 دانلود فایل
+
+  const handleDownload = async (orderId: number, item: OrderItem) => {
+    const key = `orderitem-${item.id}`;
+    setDownloading((prev) => ({ ...prev, [key]: true }));
 
     try {
-      const res = await api.get(`/orders/${order.id}/download`, {
-        responseType: "blob",
-        onDownloadProgress: (e: any) => {
-          const percent = Math.round((e.loaded * 100) / (e.total || 1));
-          setProgress((prev) => ({ ...prev, [order.id]: percent }));
-        },
-        requiresAuth: true,
-      } as any);
+      const res = await api.get(
+        `/orders/${orderId}/download/${item.product_id}`,
+        {
+          responseType: "blob",
+          requiresAuth: true,
+        } as any
+      );
 
-      const blob = new Blob([res.data], {
-        type: res.headers["content-type"] || "application/octet-stream",
-      });
+      // 📦 استخراج نام فایل از هدر Content-Disposition (که سرور فرستاده)
+      let filename = "file";
+      const disposition = res.headers["content-disposition"];
+      if (disposition) {
+        const match = disposition.match(
+          /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+        );
+        if (match?.[1]) {
+          filename = match[1].replace(/['"]/g, "");
+          filename = decodeURIComponent(filename);
+        }
+      } else {
+        const contentType = res.headers["content-type"];
+        let extension = "";
+
+        if (contentType) {
+          const mimeToExt: { [key: string]: string } = {
+            "application/pdf": "pdf",
+            "application/zip": "zip",
+            "application/x-rar-compressed": "rar",
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "video/mp4": "mp4",
+            "application/msword": "doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+              "docx",
+            "application/vnd.ms-excel": "xls",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+              "xlsx",
+          };
+          extension = mimeToExt[contentType] || "";
+        }
+
+        filename = extension ? `${item.title}.${extension}` : item.title;
+      }
+
+      // 🧾 ساخت لینک دانلود
+      const blob = new Blob([res.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = order.product?.title || "file";
+      a.download = filename;
+      a.style.display = "none";
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === order.id ? { ...o, download_used: o.download_used + 1 } : o
-        )
-      );
-      setProgress((prev) => ({ ...prev, [order.id]: 100 }));
-    } catch (err: any) {
-      toast.error(err.message || "Download failed");
-      setProgress((prev) => ({ ...prev, [order.id]: 0 }));
+      toast.success(`Downloaded: ${filename}`);
+    } catch (err) {
+      console.error("Download error:", err);
+      toast.error("Download failed");
+    } finally {
+      setDownloading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
@@ -89,141 +131,97 @@ export default function Orders() {
     );
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-6">
       <Toaster />
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-bold">My Orders</h2>
-        </CardHeader>
-        <CardBody>
-          {orders.length === 0 ? (
-            <p className="text-gray-600">
-              You have not purchased any products yet.
-            </p>
-          ) : (
-            <Table aria-label="Orders List">
-              <TableHeader>
-                <TableColumn>ID</TableColumn>
-                <TableColumn>Product</TableColumn>
-                <TableColumn>Amount</TableColumn>
-                <TableColumn>Status</TableColumn>
-                <TableColumn>Date</TableColumn>
-                <TableColumn>Download</TableColumn>
-                <TableColumn>Invoice</TableColumn>
-                <TableColumn>Action</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order: any) => {
-                  const canDownload =
-                    ["finished", "confirmed"].includes(order.status) &&
-                    (order.download_allowed === 0 ||
-                      order.download_allowed > order.download_used) &&
-                    (!order.download_expires_at ||
-                      new Date(order.download_expires_at) > new Date());
+      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+        <ShoppingBag className="w-6 h-6 text-blue-500" />
+        My Orders
+      </h1>
 
-                  return (
-                    <TableRow key={order.id}>
-                      <TableCell>{order.id}</TableCell>
-                      <TableCell>{order.product?.title}</TableCell>
-                      <TableCell>
-                        {order.amount === 0
-                          ? "Free"
-                          : `${order.amount} ${order.currency.toUpperCase()}`}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded text-xs ${
-                            ["finished", "confirmed"].includes(order.status)
-                              ? "bg-green-100 text-green-800"
-                              : order.status === "waiting"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {order.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(order.created_at).toLocaleDateString("en-US")}
-                      </TableCell>
-                      <TableCell>
-                        {canDownload ? (
-                          <>
+      {orders.length === 0 ? (
+        <p className="text-gray-600 text-center">
+          You haven't made any purchases yet.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-6">
+          {orders.map((order) => (
+            <Card key={order.id} className="shadow-md border border-gray-200">
+              <CardHeader className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-semibold text-lg">Order #{order.id}</h3>
+                  <p className="text-sm text-gray-500">
+                    Date:{" "}
+                    {new Date(order.created_at).toLocaleDateString("en-US")}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span
+                    className={`px-3 py-1 text-xs rounded-full ${
+                      order.status === "finished" ||
+                      order.status === "confirmed"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {order.status}
+                  </span>
+                  <p className="font-semibold text-sm mt-1">
+                    Amount: {order.amount} {order.currency?.toUpperCase()}
+                  </p>
+                </div>
+              </CardHeader>
+
+              <CardBody>
+                <div className="space-y-4">
+                  {order.items.map((item) => {
+                    const key = `orderitem-${item.id}`;
+                    const canDownload =
+                      order.status === "confirmed" ||
+                      order.status === "finished";
+
+                    return (
+                      <div
+                        key={key}
+                        className="flex justify-between items-center border-b border-gray-100 pb-3"
+                      >
+                        {/* 🔹 Product info */}
+                        <div>
+                          <p className="font-medium">{item.title}</p>
+                          <p className="text-sm text-gray-500">
+                            Quantity: {item.quantity} | Price: ${item.price}
+                          </p>
+                        </div>
+
+                        {/* 🔹 Download button */}
+                        <div className="flex flex-col items-end">
+                          {canDownload ? (
                             <Button
                               size="sm"
-                              onClick={() => downloadOrderFile(order)}
+                              color="primary"
+                              onClick={() => handleDownload(order.id, item)}
+                              startContent={<Download className="w-4 h-4" />}
+                              disabled={downloading[key]}
                             >
-                              Download{" "}
-                              {order.download_allowed !== 0 &&
-                                `(${
-                                  order.download_allowed - order.download_used
-                                } left)`}
+                              {downloading[key] ? "Downloading..." : "Download"}
                             </Button>
-                            {progress[order.id] !== undefined &&
-                              progress[order.id] < 100 && (
-                                <Progress
-                                  value={progress[order.id]}
-                                  color="primary"
-                                  size="sm"
-                                  className="mt-1"
-                                />
-                              )}
-                          </>
-                        ) : (
-                          <span className="text-gray-400 text-xs">
-                            {order.download_allowed !== 0
-                              ? "Expired"
-                              : "No downloads allowed"}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {order.amount > 0 &&
-                        order.status === "waiting" &&
-                        order.provider_invoice_url ? (
-                          <a
-                            href={order.provider_invoice_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline text-sm"
-                          >
-                            View Invoice
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 text-xs">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {order.status === "waiting" && (
-                          <Button
-                            size="sm"
-                            color="danger"
-                            onClick={() => setDeleteModalOrder(order)}
-                          >
-                            Delete
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardBody>
-      </Card>
+                          ) : (
+                            <span className="text-gray-400 text-xs">
+                              Payment pending
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardBody>
 
-      {deleteModalOrder && (
-        <DeleteOrderModal
-          order={deleteModalOrder}
-          isOpen={true}
-          onClose={() => setDeleteModalOrder(null)}
-          onDeleted={() =>
-            setOrders((prev) =>
-              prev.filter((o) => o.id !== deleteModalOrder.id)
-            )
-          }
-        />
+              <CardFooter className="text-xs text-gray-500">
+                Order ID: {order.id}
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
