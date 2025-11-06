@@ -15,15 +15,17 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Avatar,
+  DropdownSection,
   Spinner,
 } from "@heroui/react";
 import Link from "next/link";
 import api from "../../lib/api";
 import { logoutAction } from "../_actions/logout";
 import { useFormState } from "react-dom";
-import { InternalAxiosRequestConfig } from "axios";
-import { User } from "../../types";
-import { ShoppingCart } from "lucide-react";
+import type { InternalAxiosRequestConfig } from "axios";
+import type { User } from "../../types";
+import { ShoppingCart, Package, LogOut } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
 export default function AppNavbar() {
@@ -60,6 +62,15 @@ export default function AppNavbar() {
       router.push("/auth");
     }
   }, [state, router]);
+
+  const getUserInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   if (loading)
     return (
@@ -117,27 +128,57 @@ export default function AppNavbar() {
 
         {/* User Dropdown / Auth Buttons */}
         {user ? (
-          <Dropdown>
+          <Dropdown placement="bottom-end">
             <DropdownTrigger>
-              <Button variant="flat">Hi {user.name}</Button>
+              <Avatar
+                as="button"
+                className="transition-transform cursor-pointer"
+                color="primary"
+                name={user.name}
+                size="sm"
+                showFallback
+                fallback={getUserInitials(user.name)}
+              />
             </DropdownTrigger>
-            <DropdownMenu aria-label="User Menu">
-              <DropdownItem key="orders">
-                <Link href="/dashboard/orders" className="w-full block">
-                  Orders
-                </Link>
-              </DropdownItem>
-              <DropdownItem key="logout">
-                <form action={formAction}>
-                  <Button
-                    type="submit"
-                    className="w-full text-left"
-                    variant="flat"
-                  >
-                    Logout
-                  </Button>
-                </form>
-              </DropdownItem>
+            <DropdownMenu aria-label="User Menu" variant="flat">
+              <DropdownSection showDivider>
+                <DropdownItem
+                  key="profile"
+                  className="h-14 gap-2"
+                  textValue="User Profile"
+                  isReadOnly
+                >
+                  <p className="font-semibold">{user.name}</p>
+                  <p className="text-xs text-default-500">
+                    {user.email || "user@example.com"}
+                  </p>
+                </DropdownItem>
+              </DropdownSection>
+              <DropdownSection showDivider>
+                <DropdownItem
+                  key="orders"
+                  startContent={<Package className="w-4 h-4" />}
+                  as={Link}
+                  href="/dashboard/orders"
+                >
+                  My Orders
+                </DropdownItem>
+              </DropdownSection>
+              <DropdownSection>
+                <DropdownItem
+                  key="logout"
+                  color="danger"
+                  startContent={<LogOut className="w-4 h-4" />}
+                  onPress={() => {
+                    const form = document.createElement("form");
+                    form.style.display = "none";
+                    document.body.appendChild(form);
+                    formAction(new FormData(form));
+                  }}
+                >
+                  Log Out
+                </DropdownItem>
+              </DropdownSection>
             </DropdownMenu>
           </Dropdown>
         ) : (
