@@ -25,7 +25,7 @@ import { logoutAction } from "../_actions/logout";
 import { useFormState } from "react-dom";
 import type { InternalAxiosRequestConfig } from "axios";
 import type { User } from "../../types";
-import { ShoppingCart, Package, LogOut } from "lucide-react";
+import { ShoppingCart, Package, LogOut, LogIn, LogOutIcon } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
 export default function AppNavbar() {
@@ -216,7 +216,7 @@ export default function AppNavbar() {
             className="cursor-pointer hover:text-primary transition-colors flex items-center gap-2"
             onClick={() => handleNav("/cart")}
           >
-            <ShoppingCart className="w-5 h-5" />
+            {/* <ShoppingCart className="w-5 h-5" /> */}
             <span>Cart</span>
             {count > 0 && (
               <span className="text-sm text-gray-600">({count})</span>
@@ -231,7 +231,7 @@ export default function AppNavbar() {
                 className="cursor-pointer hover:text-primary transition-colors"
                 onClick={() => handleNav("/dashboard/orders")}
               >
-                Orders
+                My Orders
               </p>
             </NavbarMenuItem>
             <NavbarMenuItem>
@@ -240,8 +240,10 @@ export default function AppNavbar() {
                   type="submit"
                   className="w-full text-left"
                   variant="flat"
+                  color="danger"
                 >
-                  Logout
+                  <LogOutIcon className="w-5 h-5" />
+                  <span>Logout</span>
                 </Button>
               </form>
             </NavbarMenuItem>
@@ -254,7 +256,8 @@ export default function AppNavbar() {
               variant="flat"
               onClick={() => handleNav("/auth")}
             >
-              Login / Signup
+              <LogIn className="w-5 h-5" />
+              <span>Login / Signup</span>
             </Button>
           </NavbarMenuItem>
         )}
