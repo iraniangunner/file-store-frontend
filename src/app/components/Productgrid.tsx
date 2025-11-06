@@ -10,10 +10,21 @@ import {
   Slider,
   Divider,
   Pagination,
+  Chip,
+  Skeleton,
 } from "@heroui/react";
-import { DollarSign, Filter, Package, RotateCcw, Search } from "lucide-react";
-import { Product } from "@/types";
-import { ProductCard } from "@/app/components/Productcard";
+import {
+  DollarSign,
+  Filter,
+  Package,
+  RotateCcw,
+  Search,
+  X,
+  Grid3x3,
+  List,
+} from "lucide-react";
+import type { Product } from "@/types";
+import { ProductCard } from "./Productcard";
 import debounce from "lodash.debounce";
 
 export default function ProductGrid() {
@@ -75,7 +86,8 @@ export default function ProductGrid() {
     priceRange: [0, 0] as [number, number],
   });
 
-  // === Fetch categories ===
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
@@ -93,7 +105,6 @@ export default function ProductGrid() {
     return () => controller.abort();
   }, []);
 
-  // === Fetch price range ===
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
@@ -126,7 +137,6 @@ export default function ProductGrid() {
     return () => controller.abort();
   }, []);
 
-  // === Debounced search ===
   const searchDebouncedRef = useRef(
     debounce((value: string) => {
       setSearchQuery(value);
@@ -138,7 +148,6 @@ export default function ProductGrid() {
     return () => searchDebouncedRef.current.cancel();
   }, []);
 
-  // === Fetch products ===
   const fetchProducts = useCallback(
     async (pageNumber = 1) => {
       if (minPrice === null || maxPrice === null || priceRange === null) return;
@@ -195,148 +204,347 @@ export default function ProductGrid() {
     [searchQuery, appliedFilters, minPrice, maxPrice, priceRange]
   );
 
-  // === Trigger fetch on ready or filter/search change ===
   useEffect(() => {
     if (initialLoaded && appliedFilters.priceRange[1] !== 0) {
       fetchProducts(page);
     }
   }, [appliedFilters, searchQuery, minPrice, maxPrice, initialLoaded, page]);
 
+  const clearCategoryFilter = (categoryId: string) => {
+    const newCategories = selectedCategories.filter((c) => c !== categoryId);
+    setSelectedCategories(newCategories);
+    setAppliedFilters((prev) => ({
+      ...prev,
+      categories: newCategories,
+    }));
+    setPage(1);
+  };
+
+  const getCategoryName = (id: string) => {
+    return categories.find((c) => c.id === Number(id))?.name || id;
+  };
+
   if (!initialLoaded)
     return (
       <div className="h-screen flex items-center justify-center">
-        Loading...
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-default-500">Loading products...</p>
+        </div>
       </div>
     );
 
   return (
- 
-      <div className="container mx-auto px-6 py-16">
-        {/* Search */}
-        <div className="mb-8 relative w-full max-w-lg">
+    <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
+      <div className="mb-8">
+        <div className="relative w-full max-w-2xl mx-auto">
           <Input
-            placeholder="Search..."
+            placeholder="Search for products..."
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.currentTarget.value);
               searchDebouncedRef.current(e.currentTarget.value);
             }}
-            className="pr-10"
-          />
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
-
-        <div className="flex flex-col lg:flex-row items-start gap-8">
-          {/* Sidebar */}
-          <Card className="w-full sm:w-80 lg:w-64 p-5 border rounded-2xl shadow-sm bg-white/80 backdrop-blur-sm self-start lg:sticky lg:top-20">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-800 text-base flex items-center gap-2">
-                <Filter className="w-4 h-4 text-primary" /> Filters
-              </h2>
-              <Button
-                size="sm"
-                variant="ghost"
-                onPress={() => {
-                  if (minPrice !== null && maxPrice !== null) {
-                    const newRange: [number, number] = [minPrice, maxPrice];
-                    setSelectedCategories([]);
-                    setPriceRange(newRange);
-                    setAppliedFilters({ categories: [], priceRange: newRange });
-                    // setPage(1);
-                  }
-                }}
-                className="text-gray-500 text-sm flex items-center gap-1"
-              >
-                <RotateCcw className="w-4 h-4" /> Reset
-              </Button>
-            </div>
-            <Divider className="mb-4" />
-
-            <div className="space-y-6 flex-1">
-              {/* Categories */}
-              <div>
-                <h3 className="font-semibold text-gray-700 text-sm mb-2 flex items-center gap-2">
-                  <Package className="w-4 h-4 text-primary" /> Categories
-                </h3>
-                <CheckboxGroup
-                  value={selectedCategories}
-                  onValueChange={(values) =>
-                    setSelectedCategories(values as string[])
-                  }
+            size="lg"
+            startContent={<Search className="w-5 h-5 text-default-400" />}
+            endContent={
+              searchInput && (
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  onPress={() => {
+                    setSearchInput("");
+                    setSearchQuery("");
+                  }}
                 >
-                  {categories.map((c) => (
-                    <Checkbox key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </Checkbox>
-                  ))}
-                </CheckboxGroup>
-              </div>
+                  <X className="w-4 h-4" />
+                </Button>
+              )
+            }
+            classNames={{
+              input: "text-base",
+              inputWrapper: "shadow-md hover:shadow-lg transition-shadow",
+            }}
+          />
+        </div>
+      </div>
 
-              {/* Price */}
-              <div>
-                <h3 className="font-semibold text-gray-700 text-sm mb-2 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-primary" /> Price
-                </h3>
-                <p className="text-sm text-gray-500 mb-2">
+      <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
+        <Card className="w-full lg:w-80 p-6 border-2 border-divider rounded-2xl shadow-lg bg-content1 self-start lg:sticky lg:top-20">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-bold text-foreground text-lg flex items-center gap-2">
+              <Filter className="w-5 h-5 text-primary" /> Filters
+            </h2>
+            <Button
+              size="sm"
+              variant="light"
+              color="danger"
+              onPress={() => {
+                if (minPrice !== null && maxPrice !== null) {
+                  const newRange: [number, number] = [minPrice, maxPrice];
+                  setSelectedCategories([]);
+                  setPriceRange(newRange);
+                  setAppliedFilters({ categories: [], priceRange: newRange });
+                  setSearchInput("");
+                  setSearchQuery("");
+                }
+              }}
+              startContent={<RotateCcw className="w-4 h-4" />}
+              className="font-semibold"
+            >
+              Reset All
+            </Button>
+          </div>
+          <Divider className="mb-5" />
+
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-bold text-foreground text-base mb-3 flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" /> Categories
+              </h3>
+              <CheckboxGroup
+                value={selectedCategories}
+                onValueChange={(values) =>
+                  setSelectedCategories(values as string[])
+                }
+                classNames={{
+                  wrapper: "gap-2",
+                }}
+              >
+                {categories.map((c) => (
+                  <Checkbox
+                    key={c.id}
+                    value={String(c.id)}
+                    classNames={{
+                      label: "text-sm font-medium",
+                    }}
+                  >
+                    {c.name}
+                  </Checkbox>
+                ))}
+              </CheckboxGroup>
+            </div>
+
+            <Divider />
+
+            <div>
+              <h3 className="font-bold text-foreground text-base mb-3 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" /> Price Range
+              </h3>
+              <div className="bg-default-100 rounded-lg p-3 mb-4">
+                <p className="text-base font-semibold text-foreground text-center">
                   {priceRange ? `$${priceRange[0]} - $${priceRange[1]}` : ""}
                 </p>
-                {minPrice !== null && maxPrice !== null && (
-                  <Slider
-                    minValue={minPrice}
-                    maxValue={maxPrice}
-                    step={1}
-                    value={priceRange ?? [minPrice ?? 0, maxPrice ?? 1000]}
-                    onChange={(v) => {
-                      if (Array.isArray(v))
-                        setPriceRange(v as [number, number]);
-                    }}
-                    aria-label="Price range slider"
-                  />
+              </div>
+              {minPrice !== null && maxPrice !== null && (
+                <Slider
+                  minValue={minPrice}
+                  maxValue={maxPrice}
+                  step={1}
+                  value={priceRange ?? [minPrice ?? 0, maxPrice ?? 1000]}
+                  onChange={(v) => {
+                    if (Array.isArray(v)) setPriceRange(v as [number, number]);
+                  }}
+                  aria-label="Price range slider"
+                  color="primary"
+                  size="lg"
+                  classNames={{
+                    track: "h-2",
+                    thumb: "w-5 h-5",
+                  }}
+                />
+              )}
+            </div>
+
+            <Button
+              color="primary"
+              size="lg"
+              onPress={() => {
+                if (priceRange !== null) {
+                  setAppliedFilters({
+                    categories: selectedCategories,
+                    priceRange,
+                  });
+                  setPage(1);
+                }
+              }}
+              className="w-full font-bold shadow-lg"
+              startContent={<Filter className="w-5 h-5" />}
+            >
+              Apply Filters
+            </Button>
+          </div>
+        </Card>
+
+        <div className="flex-1 w-full">
+          {/* Active filters display and product count */}
+          <div className="mb-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Products</h2>
+                {!loading && (
+                  <p className="text-sm text-default-500 mt-1">
+                    {products.length} products found
+                  </p>
                 )}
               </div>
 
-              {/* Apply Button */}
-              <Button
-                color="primary"
-                onPress={() => {
-                  if (priceRange !== null) {
-                    setAppliedFilters({
-                      categories: selectedCategories,
-                      priceRange,
-                    });
-                    setPage(1);
-                  }
-                }}
-                className="mt-4 w-full"
-              >
-                Apply Filters
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  isIconOnly
+                  variant={viewMode === "grid" ? "solid" : "flat"}
+                  color={viewMode === "grid" ? "primary" : "default"}
+                  onPress={() => setViewMode("grid")}
+                  size="sm"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  isIconOnly
+                  variant={viewMode === "list" ? "solid" : "flat"}
+                  color={viewMode === "list" ? "primary" : "default"}
+                  onPress={() => setViewMode("list")}
+                  size="sm"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          </Card>
 
-          {/* Products */}
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+            {(appliedFilters.categories.length > 0 || searchQuery) && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-default-500">
+                  Active filters:
+                </span>
+                {searchQuery && (
+                  <Chip
+                    onClose={() => {
+                      setSearchInput("");
+                      setSearchQuery("");
+                    }}
+                    variant="flat"
+                    color="primary"
+                  >
+                    Search: {searchQuery}
+                  </Chip>
+                )}
+                {appliedFilters.categories.map((catId) => (
+                  <Chip
+                    key={catId}
+                    onClose={() => clearCategoryFilter(catId)}
+                    variant="flat"
+                    color="secondary"
+                  >
+                    {getCategoryName(catId)}
+                  </Chip>
+                ))}
+              </div>
+            )}
           </div>
+
+          {loading ? (
+            <div
+              className={`grid gap-6 ${
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1"
+              }`}
+            >
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="rounded-2xl">
+                  <Skeleton className="rounded-t-2xl">
+                    <div className="h-[240px] rounded-t-2xl bg-default-300" />
+                  </Skeleton>
+                  <div className="p-5 space-y-3">
+                    <Skeleton className="w-3/4 rounded-lg">
+                      <div className="h-6 w-3/4 rounded-lg bg-default-200" />
+                    </Skeleton>
+                    <Skeleton className="w-full rounded-lg">
+                      <div className="h-4 w-full rounded-lg bg-default-200" />
+                    </Skeleton>
+                    <Skeleton className="w-2/3 rounded-lg">
+                      <div className="h-4 w-2/3 rounded-lg bg-default-200" />
+                    </Skeleton>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : products.length > 0 ? (
+            <div
+              className={`grid gap-6 ${
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1"
+              }`}
+            >
+              {products.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-12 text-center rounded-2xl border-2 border-dashed border-divider">
+              <div className="space-y-4">
+                <div className="w-20 h-20 mx-auto bg-default-100 rounded-full flex items-center justify-center">
+                  <Package className="w-10 h-10 text-default-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    No products found
+                  </h3>
+                  <p className="text-default-500 mb-4">
+                    Try adjusting your filters or search query
+                  </p>
+                  <Button
+                    color="primary"
+                    variant="flat"
+                    onPress={() => {
+                      if (minPrice !== null && maxPrice !== null) {
+                        const newRange: [number, number] = [minPrice, maxPrice];
+                        setSelectedCategories([]);
+                        setPriceRange(newRange);
+                        setAppliedFilters({
+                          categories: [],
+                          priceRange: newRange,
+                        });
+                        setSearchInput("");
+                        setSearchQuery("");
+                      }
+                    }}
+                    startContent={<RotateCcw className="w-4 h-4" />}
+                  >
+                    Clear All Filters
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
-
-        {/* Pagination */}
-        {products.length > 0 && totalPages > 1 && (
-          <div className="flex justify-center mt-8">
-            <Pagination
-              total={totalPages}
-              page={page}
-              onChange={setPage}
-              showControls
-            />
-          </div>
-        )}
-
-        {/* Error */}
-        {error && <p className="text-red-500 mt-4">{error}</p>}
       </div>
-   
+
+      {!loading && products.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center mt-12">
+          <Pagination
+            total={totalPages}
+            page={page}
+            onChange={setPage}
+            showControls
+            color="primary"
+            size="lg"
+            classNames={{
+              wrapper: "gap-2",
+              item: "font-semibold",
+            }}
+          />
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <Card className="mt-6 p-4 bg-danger-50 border-2 border-danger rounded-xl">
+          <p className="text-danger font-semibold">{error}</p>
+        </Card>
+      )}
+    </div>
   );
 }
