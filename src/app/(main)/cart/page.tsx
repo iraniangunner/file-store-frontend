@@ -183,10 +183,6 @@ export default function CartPage() {
                   <span>Subtotal</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-default-600">
-                  <span>Shipping</span>
-                  <span className="text-success">Free</span>
-                </div>
               </div>
 
               <Divider />

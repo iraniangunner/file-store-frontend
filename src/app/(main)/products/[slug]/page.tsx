@@ -29,6 +29,8 @@ import {
   Truck,
   Shield,
   ArrowLeft,
+  Wallet,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -285,18 +287,18 @@ export default function ProductDetail() {
               <CardBody>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="flex flex-col items-center text-center gap-2">
-                    <Truck size={24} className="text-primary" />
-                    <span className="text-xs text-gray-600">Free Shipping</span>
+                    <Wallet size={24} className="text-primary" />
+                    <span className="text-xs text-gray-600">Crypto Payments</span>
                   </div>
                   <div className="flex flex-col items-center text-center gap-2">
-                    <Shield size={24} className="text-primary" />
+                    <Download size={24} className="text-primary" />
                     <span className="text-xs text-gray-600">
-                      Secure Payment
+                      Instant Access
                     </span>
                   </div>
                   <div className="flex flex-col items-center text-center gap-2">
-                    <Package size={24} className="text-primary" />
-                    <span className="text-xs text-gray-600">Easy Returns</span>
+                    <Shield size={24} className="text-primary" />
+                    <span className="text-xs text-gray-600">Blockchain Secured</span>
                   </div>
                 </div>
               </CardBody>
