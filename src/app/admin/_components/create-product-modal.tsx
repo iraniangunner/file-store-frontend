@@ -19,16 +19,28 @@ interface Category {
   name: string;
 }
 
-export function CreateProductModal({ onProductCreated }: { onProductCreated?: () => void }) {
+export function CreateProductModal({
+  onProductCreated,
+}: {
+  onProductCreated?: () => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  // const [form, setForm] = useState({
+  //   title: "",
+  //   description: "",
+  //   price: "",
+  //   file: null as File | null,
+  //   category_ids: [] as string[], // آرایه چندتایی
+  // });
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     file: null as File | null,
-    category_ids: [] as string[], // آرایه چندتایی
+    image: null as File | null,
+    category_ids: [] as string[],
   });
 
   // Fetch categories
@@ -49,15 +61,51 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
     setForm((prev) => ({ ...prev, file }));
   };
 
+  // const handleSubmit = async () => {
+  //   if (
+  //     !form.title ||
+  //     !form.description ||
+  //     !form.price ||
+  //     !form.file ||
+  //     form.category_ids.length === 0
+  //   ) {
+  //     alert("Please fill all fields, upload a file, and select at least one category.");
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("title", form.title);
+  //     formData.append("description", form.description);
+  //     formData.append("price", form.price);
+  //     formData.append("file", form.file);
+
+  //     // اضافه کردن همه دسته‌ها به فرم دیتا
+  //     form.category_ids.forEach((id) => {
+  //       formData.append("category_ids[]", id);
+  //     });
+
+  //     await api.post("/products", formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //       requiresAuth: true,
+  //     } as any);
+
+  //     setIsOpen(false);
+  //     setForm({ title: "", description: "", price: "", file: null, category_ids: [] });
+  //     onProductCreated?.(); // Refresh product list
+  //   } catch (error) {
+  //     console.error("Error creating product:", error);
+  //     alert("Failed to create product. Please try again.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
   const handleSubmit = async () => {
-    if (
-      !form.title ||
-      !form.description ||
-      !form.price ||
-      !form.file ||
-      form.category_ids.length === 0
-    ) {
-      alert("Please fill all fields, upload a file, and select at least one category.");
+    if (!form.title || !form.price || !form.file) {
+      alert("Please fill all required fields and upload a file.");
       return;
     }
 
@@ -70,7 +118,12 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
       formData.append("price", form.price);
       formData.append("file", form.file);
 
-      // اضافه کردن همه دسته‌ها به فرم دیتا
+      // ✅ Add image if selected
+      if (form.image) {
+        formData.append("image", form.image);
+      }
+
+      // ✅ Add categories
       form.category_ids.forEach((id) => {
         formData.append("category_ids[]", id);
       });
@@ -81,8 +134,15 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
       } as any);
 
       setIsOpen(false);
-      setForm({ title: "", description: "", price: "", file: null, category_ids: [] });
-      onProductCreated?.(); // Refresh product list
+      setForm({
+        title: "",
+        description: "",
+        price: "",
+        file: null,
+        image: null, // ✅ reset image
+        category_ids: [],
+      });
+      onProductCreated?.();
     } catch (error) {
       console.error("Error creating product:", error);
       alert("Failed to create product. Please try again.");
@@ -94,7 +154,11 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
   return (
     <>
       {/* === Create Product Button === */}
-      <Button color="primary" startContent={<Plus size={18} />} onPress={() => setIsOpen(true)}>
+      <Button
+        color="primary"
+        startContent={<Plus size={18} />}
+        onPress={() => setIsOpen(true)}
+      >
         Create Product
       </Button>
 
@@ -107,25 +171,33 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
               label="Title"
               placeholder="Enter product title"
               value={form.title}
-              onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, title: e.target.value }))
+              }
             />
             <Textarea
               label="Description"
               placeholder="Enter product description"
               value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, description: e.target.value }))
+              }
             />
             <Input
               label="Price ($)"
               type="number"
               placeholder="Enter price"
               value={form.price}
-              onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, price: e.target.value }))
+              }
             />
 
             {/* === Multi-category selection === */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Categories</label>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Categories
+              </label>
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto border rounded-lg p-2">
                 {categories.map((cat) => (
                   <label key={cat.id} className="flex items-center gap-2">
@@ -149,6 +221,28 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
               </div>
             </div>
 
+            {/* Image upload */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Upload Product Image (PNG, JPG, GIF, etc.)
+              </label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const image = e.target.files?.[0] || null;
+                  setForm((prev) => ({ ...prev, image }));
+                }}
+                className="block w-full border rounded-lg p-2 text-sm"
+              />
+              {form.image && (
+                <img
+                  src={URL.createObjectURL(form.image)}
+                  alt="Preview"
+                  className="mt-2 w-32 h-32 object-cover rounded-lg border"
+                />
+              )}
+            </div>
             {/* === File upload === */}
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">
@@ -167,7 +261,12 @@ export function CreateProductModal({ onProductCreated }: { onProductCreated?: ()
               )}
             </div>
 
-            <Button color="primary" onPress={handleSubmit} disabled={isSubmitting} className="mt-2">
+            <Button
+              color="primary"
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              className="mt-2"
+            >
               {isSubmitting ? (
                 <>
                   <Spinner size="sm" /> Creating...

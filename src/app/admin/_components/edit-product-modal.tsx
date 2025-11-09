@@ -32,16 +32,28 @@ export function EditProductModal({
   onClose,
   onProductUpdated,
 }: EditProductModalProps) {
+  // const [form, setForm] = useState({
+  //   title: "",
+  //   description: "",
+  //   price: "",
+  //   file: null as File | null,
+  //   category_ids: [] as string[], // تغییر به چند دسته
+  // });
+
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     file: null as File | null,
-    category_ids: [] as string[], // تغییر به چند دسته
+    image: null as File | null, // ✅ new
+    category_ids: [] as string[],
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+
+
+  
 
   // بارگذاری دسته‌ها
   useEffect(() => {
@@ -57,6 +69,17 @@ export function EditProductModal({
   }, []);
 
   // مقداردهی اولیه فرم با محصول فعلی
+  // useEffect(() => {
+  //   if (product) {
+  //     setForm({
+  //       title: product.title || "",
+  //       description: product.description || "",
+  //       price: product.price?.toString() || "",
+  //       file: null,
+  //       category_ids: product.categories?.map((c:any) => String(c.id)) || [],
+  //     });
+  //   }
+  // }, [product]);
   useEffect(() => {
     if (product) {
       setForm({
@@ -64,7 +87,8 @@ export function EditProductModal({
         description: product.description || "",
         price: product.price?.toString() || "",
         file: null,
-        category_ids: product.categories?.map((c:any) => String(c.id)) || [],
+        image: null, // ✅ new
+        category_ids: product.categories?.map((c: any) => String(c.id)) || [],
       });
     }
   }, [product]);
@@ -74,30 +98,72 @@ export function EditProductModal({
     setForm((prev) => ({ ...prev, file }));
   };
 
+  // const handleSubmit = async () => {
+  //   if (!product) return;
+  //   if (
+  //     !form.title ||
+  //     !form.description ||
+  //     !form.price ||
+  //     form.category_ids.length === 0
+  //   ) {
+  //     alert(
+  //       "Please fill in all required fields and select at least one category."
+  //     );
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("title", form.title);
+  //     formData.append("description", form.description);
+  //     formData.append("price", form.price);
+
+  //     // اضافه کردن همه دسته‌ها به فرم دیتا
+  //     form.category_ids.forEach((id) => formData.append("category_ids[]", id));
+
+  //     if (form.file) formData.append("file", form.file);
+
+  //     await api.post(`/products/${product.slug}?_method=PUT`, formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //       requiresAuth: true,
+  //     } as any);
+
+  //     onProductUpdated?.();
+  //     onClose();
+  //   } catch (error) {
+  //     console.error("Error updating product:", error);
+  //     alert("Failed to update product.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
+
   const handleSubmit = async () => {
     if (!product) return;
     if (!form.title || !form.description || !form.price || form.category_ids.length === 0) {
       alert("Please fill in all required fields and select at least one category.");
       return;
     }
-
+  
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("title", form.title);
       formData.append("description", form.description);
       formData.append("price", form.price);
-
-      // اضافه کردن همه دسته‌ها به فرم دیتا
+  
       form.category_ids.forEach((id) => formData.append("category_ids[]", id));
-
+  
       if (form.file) formData.append("file", form.file);
-
+      if (form.image) formData.append("image", form.image); // ✅ new line
+  
       await api.post(`/products/${product.slug}?_method=PUT`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         requiresAuth: true,
       } as any);
-
+  
       onProductUpdated?.();
       onClose();
     } catch (error) {
@@ -107,7 +173,7 @@ export function EditProductModal({
       setIsSubmitting(false);
     }
   };
-
+  
   const handleDownload = async () => {
     if (!product || !product.file_path) return;
     setIsDownloading(true);
@@ -137,6 +203,8 @@ export function EditProductModal({
 
   if (!product) return null;
 
+
+
   return (
     <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalContent>
@@ -150,7 +218,9 @@ export function EditProductModal({
           <Textarea
             label="Description"
             value={form.description}
-            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, description: e.target.value }))
+            }
           />
           <Input
             label="Price ($)"
@@ -185,6 +255,49 @@ export function EditProductModal({
                 </label>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">
+              Upload New Product Image (PNG, JPG, etc.)
+            </label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const image = e.target.files?.[0] || null;
+                setForm((prev) => ({ ...prev, image }));
+              }}
+              className="block w-full border rounded-lg p-2 text-sm"
+            />
+
+            {/* Show current or new image */}
+            {form.image ? (
+              <div className="mt-2">
+                <p className="text-xs text-gray-500 mb-1">
+                  Selected: {form.image.name} (
+                  {(form.image.size / 1024).toFixed(1)} KB)
+                </p>
+                <img
+                  src={URL.createObjectURL(form.image)}
+                  alt="Preview"
+                  className="w-24 h-24 rounded-lg object-cover border"
+                />
+              </div>
+            ) : product.image_url ? (
+              <div className="mt-2">
+                <p className="text-xs text-gray-400 mb-1">Current Image:</p>
+                <img
+                  src={`https://filerget.com${product.image_url}`}
+                  alt={product.title}
+                  className="w-24 h-24 rounded-lg object-cover border"
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 mt-1">
+                No image uploaded yet.
+              </p>
+            )}
           </div>
 
           {/* فایل */}

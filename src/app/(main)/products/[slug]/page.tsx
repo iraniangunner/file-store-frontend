@@ -38,8 +38,8 @@ export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
+  // const [quantity, setQuantity] = useState(1);
+  // const [selectedImage, setSelectedImage] = useState(0);
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -58,23 +58,20 @@ export default function ProductDetail() {
     if (!product) return;
     setCreating(true);
     try {
-      await addToCart(product.id, quantity);
-      // toast.success(`Added ${quantity} item(s) to cart`)
+      await addToCart(product.id, 1);
     } catch (error) {
-      // toast.error("Failed to add to cart")
     } finally {
       setCreating(false);
     }
   }
 
-  const incrementQuantity = () => {
-    // if (product?.stock && quantity >= product.stock) return;
-    setQuantity((prev) => prev + 1);
-  };
+  // const incrementQuantity = () => {
+  //   setQuantity((prev) => prev + 1);
+  // };
 
-  const decrementQuantity = () => {
-    if (quantity > 1) setQuantity((prev) => prev - 1);
-  };
+  // const decrementQuantity = () => {
+  //   if (quantity > 1) setQuantity((prev) => prev - 1);
+  // };
 
   if (!product)
     return (
@@ -83,14 +80,6 @@ export default function ProductDetail() {
       </div>
     );
 
-  // const productImages = product.images || [
-  //   product.image ||
-  //     `/placeholder.svg?height=600&width=600&query=${encodeURIComponent(
-  //       product.title
-  //     )}`,
-  // ];
-
-  // const isInStock = !product.stock || product.stock > 0;
   const isFree = Number(product.price) === 0;
 
   return (
@@ -120,16 +109,16 @@ export default function ProductDetail() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <div className="space-y-4">
-            <Card className="overflow-hidden">
-              <CardBody className="p-0">
-                {/* <Image
-                  src={productImages[selectedImage] || "/placeholder.svg"}
+            {/* <Card className="overflow-hidden">
+              <CardBody className="p-0"> */}
+                <img
+                  src={product.image_url || "/placeholder.svg"}
                   alt={product.title}
                   className="w-full aspect-square object-cover"
-                  radius="none"
-                /> */}
-              </CardBody>
-            </Card>
+                  // radius="none"
+                />
+              {/* </CardBody>
+            </Card> */}
 
             {/* {productImages.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
