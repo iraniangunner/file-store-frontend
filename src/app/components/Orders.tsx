@@ -194,7 +194,7 @@ export default function Orders() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8">
+    <div className="max-w-6xl mx-auto p-4 md:p-8 mb-36">
       <Toaster position="top-right" />
 
       <div className="mb-8">
@@ -378,7 +378,6 @@ export default function Orders() {
                               <div className="flex items-center gap-4 text-sm text-default-500">
                                 <span>Qty: {item.quantity}</span>
                                 <span>•</span>
-                                {/* <span className="font-medium">${item.price.toFixed(2)}</span> */}
                               </div>
                             </div>
                           </div>
@@ -397,8 +396,6 @@ export default function Orders() {
                                     <Download className="w-4 h-4" />
                                   )
                                 }
-                                isLoading={downloading[key]}
-                                isDisabled={downloading[key]}
                               >
                                 {downloading[key]
                                   ? "Downloading..."

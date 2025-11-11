@@ -110,7 +110,7 @@ export default function CartPage() {
 
   // 🧾 Cart items
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
+    <div className="max-w-6xl mx-auto p-4 md:p-6 lg:p-8 mb-36">
       <Toaster />
 
       <div className="mb-6">
@@ -122,17 +122,17 @@ export default function CartPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          {cart.items.map((item) => (
+          {cart.items.map((item:any) => (
             <Card key={item.id} className="border-none shadow-sm">
               <CardBody className="p-4">
                 <div className="flex gap-4">
-                  {item.product.thumbnail && (
+                  {item.product.image_path && (
                     <div className="relative w-24 h-24 flex-shrink-0">
-                      <Image
-                        src={item.product.thumbnail || "/placeholder.svg"}
+                      <img
+                        src={`https://filerget.com/storage/${item.product.image_path}` || "/placeholder.svg"}
                         alt={item.product.title}
-                        fill
-                        className="rounded-lg object-cover"
+                        // fill
+                        className="rounded-lg object-cover aspect-square"
                       />
                     </div>
                   )}

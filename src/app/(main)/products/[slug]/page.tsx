@@ -40,18 +40,42 @@ export default function ProductDetail() {
   const [creating, setCreating] = useState(false);
   // const [quantity, setQuantity] = useState(1);
   // const [selectedImage, setSelectedImage] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [liking, setLiking] = useState(false);
   const { addToCart } = useCart();
 
   useEffect(() => {
     if (!slug) return;
 
-    api
-      .get<Product>(`/products/${slug}`)
-      .then((res) => setProduct(res.data))
-      .catch((err) => {
-        if (err.response?.status === 401) toast.error("Please login first");
-        else toast.error("Something went wrong");
-      });
+    async function fetchData() {
+      try {
+        // درخواست اصلی محصول (همیشه جواب میده)
+        const productRes = await api.get(`/products/${slug}`);
+        setProduct(productRes.data);
+      } catch (err) {
+        toast.error("Error loading product data");
+        return;
+      }
+
+      // درخواست like status (نیاز به login)
+      try {
+        const likeStatusRes = await api.get(`/products/${slug}/like/status`);
+        setLiked(likeStatusRes.data.liked);
+      } catch (err) {
+        setLiked(false); // اگه لاگین نیست، فرض کن لایک نشده
+      }
+
+      // درخواست like count (معمولاً public است)
+      try {
+        const likeCountRes = await api.get(`/products/${slug}/likes/count`);
+        setLikesCount(likeCountRes.data.likes);
+      } catch (err) {
+        setLikesCount(0); // اگه مشکلی بود، صفر فرض کن
+      }
+    }
+
+    fetchData();
   }, [slug]);
 
   async function handleAddToCart() {
@@ -62,6 +86,24 @@ export default function ProductDetail() {
     } catch (error) {
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleToggleLike() {
+    if (!product || liking) return;
+    setLiking(true);
+    try {
+      const res = await api.post(`/products/${slug}/like`);
+      setLiked(res.data.liked);
+      setLikesCount((prev) => (res.data.liked ? prev + 1 : prev - 1));
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error("Please login first");
+      } else {
+        toast.error("Error toggling like");
+      }
+    } finally {
+      setLiking(false);
     }
   }
 
@@ -87,7 +129,7 @@ export default function ProductDetail() {
       <Toaster position="top-center" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
+        <div className="mb-6 overflow-hidden">
           <Breadcrumbs>
             <BreadcrumbItem>
               <Link href="/">Home</Link>
@@ -108,19 +150,19 @@ export default function ProductDetail() {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          <div className="space-y-4">
-            {/* <Card className="overflow-hidden">
-              <CardBody className="p-0"> */}
-                <img
-                  src={product.image_url || "/placeholder.svg"}
-                  alt={product.title}
-                  className="w-full aspect-square object-cover"
-                  // radius="none"
-                />
-              {/* </CardBody>
-            </Card> */}
+          <div>
+          {product.image_url && (
+            <div className="overflow-hidden">
+              <Image
+                src={product.image_url || "/placeholder.svg"}
+                alt={product.title}
+                className="w-full h-full object-cover"
+                radius="none"
+              />
+            </div>
+          )}
 
-            {/* {productImages.length > 1 && (
+          {/* {productImages.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
                 {productImages.map((img, idx) => (
                   <Card
@@ -148,7 +190,6 @@ export default function ProductDetail() {
           </div>
 
           <div className="space-y-6">
-
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
                 {product.title}
@@ -259,14 +300,51 @@ export default function ProductDetail() {
                     )
                   }
                   onPress={handleAddToCart}
-                  // isDisabled={!isInStock || creating}
                 >
                   {creating ? "Adding..." : "Add to Cart"}
                 </Button>
-                <Button isIconOnly size="lg" variant="bordered" color="danger">
-                  <Heart size={20} />
+                <Button
+                  isIconOnly
+                  size="lg"
+                  variant={liked ? "solid" : "bordered"}
+                  color="danger"
+                  onPress={handleToggleLike}
+                  isDisabled={liking}
+                >
+                  {liking ? (
+                    <Spinner size="sm" color="danger" />
+                  ) : (
+                    <Heart
+                      size={20}
+                      className={liked ? "fill-red-500" : "text-red-500"}
+                    />
+                  )}
                 </Button>
-                <Button isIconOnly size="lg" variant="bordered">
+
+                <span className="text-sm text-gray-600">{likesCount}</span>
+                <Button
+                  isIconOnly
+                  size="lg"
+                  variant="bordered"
+                  onPress={() => {
+                    if (!product) return;
+                    const url = `https://filerget.com/products/${product.slug}`;
+
+                    // اگر مرورگر قابلیت share داشته باشه
+                    if (navigator.share) {
+                      navigator
+                        .share({
+                          title: product.title,
+                          url,
+                        })
+                        .catch((err) => console.error("Share failed:", err));
+                    } else {
+                      // fallback: کپی به clipboard
+                      navigator.clipboard.writeText(url);
+                      toast.success("Product URL copied to clipboard!");
+                    }
+                  }}
+                >
                   <Share2 size={20} />
                 </Button>
               </div>
@@ -277,7 +355,9 @@ export default function ProductDetail() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="flex flex-col items-center text-center gap-2">
                     <Wallet size={24} className="text-primary" />
-                    <span className="text-xs text-gray-600">Crypto Payments</span>
+                    <span className="text-xs text-gray-600">
+                      Crypto Payments
+                    </span>
                   </div>
                   <div className="flex flex-col items-center text-center gap-2">
                     <Download size={24} className="text-primary" />
@@ -287,7 +367,9 @@ export default function ProductDetail() {
                   </div>
                   <div className="flex flex-col items-center text-center gap-2">
                     <Shield size={24} className="text-primary" />
-                    <span className="text-xs text-gray-600">Blockchain Secured</span>
+                    <span className="text-xs text-gray-600">
+                      Blockchain Secured
+                    </span>
                   </div>
                 </div>
               </CardBody>

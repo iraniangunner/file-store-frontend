@@ -23,7 +23,11 @@ export function ProductCard({ product }: any) {
         <div className="relative w-full h-[240px] overflow-hidden">
           <Image
             alt={product.title}
-            src={product.image || "/images/folder.png"}
+            src={
+              product.image_url
+                ? `https://filerget.com${product.image_url}`
+                : "/images/folder.png"
+            }
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             removeWrapper
           />
@@ -41,7 +45,7 @@ export function ProductCard({ product }: any) {
             </Chip>
           )}
 
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {/* <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <Button
               as={Link}
               href={`/products/${product.slug}`}
@@ -53,7 +57,7 @@ export function ProductCard({ product }: any) {
             >
               Quick View
             </Button>
-          </div>
+          </div> */}
         </div>
       </CardHeader>
 

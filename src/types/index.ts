@@ -15,6 +15,7 @@ export interface Product {
   total_sales: string;
   categories: String[];
   image_url:string;
+  image_path:string;
 }
 
 export interface Contact {

@@ -173,12 +173,32 @@ export function EditProductModal({
       setIsSubmitting(false);
     }
   };
+
+
+  const handleDeleteImage = async () => {
+    if (!product) return;
+    if (!confirm("Are you sure you want to delete this image?")) return;
+  
+    setIsSubmitting(true);
+    try {
+      await api.delete(`/products/${product.slug}/image`, { requiresAuth: true } as any);
+      alert("Image deleted successfully.");
+      onProductUpdated?.();
+      onClose();
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      alert("Failed to delete image.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   
   const handleDownload = async () => {
     if (!product || !product.file_path) return;
     setIsDownloading(true);
     try {
-      const res = await api.get(`/products/${product.id}/download`, {
+      const res = await api.get(`/products/${product.slug}/download`, {
         responseType: "blob",
         requiresAuth: true,
       } as any);
@@ -284,7 +304,7 @@ export function EditProductModal({
                   className="w-24 h-24 rounded-lg object-cover border"
                 />
               </div>
-            ) : product.image_url ? (
+            ) : product.image_url && !form.image ? (
               <div className="mt-2">
                 <p className="text-xs text-gray-400 mb-1">Current Image:</p>
                 <img
@@ -292,11 +312,20 @@ export function EditProductModal({
                   alt={product.title}
                   className="w-24 h-24 rounded-lg object-cover border"
                 />
+            
+                <Button
+                  color="danger"
+                  size="sm"
+                  variant="flat"
+                  className="mt-2"
+                  onPress={handleDeleteImage}
+                  disabled={isSubmitting}
+                >
+                  Delete Image
+                </Button>
               </div>
             ) : (
-              <p className="text-xs text-gray-400 mt-1">
-                No image uploaded yet.
-              </p>
+              <p className="text-xs text-gray-400 mt-1">No image uploaded yet.</p>
             )}
           </div>
 

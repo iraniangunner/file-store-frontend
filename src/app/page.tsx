@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import Link from "next/link";
-// import AppNavbar from "./components/Navbar";
 
 export const metadata: Metadata = {
   title: "Filerget",
@@ -11,7 +10,6 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      {/* <AppNavbar/> */}
       <main className="flex min-h-screen items-center justify-center px-4">
         <div className="flex max-w-4xl flex-col items-center text-center">
           {/* Logo and Tagline */}

@@ -8,7 +8,7 @@ import {
   ModalBody,
   Button,
 } from "@heroui/react";
-import { Contact } from "@/types"; // define Contact type in types file or copy interface
+import { Contact } from "@/types"; 
 import api from "@/lib/api";
 
 interface DeleteCommentModalProps {
