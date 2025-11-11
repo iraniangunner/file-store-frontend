@@ -7,7 +7,7 @@ import api from "@/lib/api";
 interface DeleteProductModalProps {
   product: Product;
   onClose: () => void;
-  onDeleted: () => void; // callback to refresh table
+  onDeleted: () => void; 
 }
 
 export function DeleteProductModal({ product, onClose, onDeleted }: DeleteProductModalProps) {
@@ -17,8 +17,8 @@ export function DeleteProductModal({ product, onClose, onDeleted }: DeleteProduc
     setIsDeleting(true);
     try {
       await api.delete(`/products/${product.slug}`, { requiresAuth: true } as any);
-      onDeleted(); // refresh table
-      onClose(); // close modal
+      onDeleted(); 
+      onClose();
     } catch (err) {
       console.error(err);
       alert("Failed to delete product.");

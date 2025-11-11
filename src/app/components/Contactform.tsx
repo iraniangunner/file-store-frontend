@@ -101,7 +101,7 @@ export default function ContactForm() {
             onVerify={setCaptchaToken}
           />
 
-          <Button type="submit" color="primary" fullWidth>
+          <Button type="submit" className="bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold" fullWidth>
             Send Message
           </Button>
         </form>

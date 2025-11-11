@@ -20,7 +20,7 @@ export default function ContactPage() {
         <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
           Get in Touch
         </h1>
-        <p className="text-gray-600 mb-6 leading-relaxed">
+        <p className="text-gray-600 mb-6 leading-relaxed text-justify">
           Have questions, feedback, or partnership inquiries? We’d love to hear
           from you! Fill out the form and our team will get back to you soon.
         </p>

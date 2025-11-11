@@ -51,6 +51,12 @@ export function MainSideBar() {
       icon: <Settings size={18} />,
       href: "/admin/comments",
     },
+
+    {
+      name: "Product Comments",
+      icon: <Settings size={18} />,
+      href: "/admin/product-comments",
+    },
   ];
 
   return (

@@ -1,4 +1,5 @@
 // import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 // const geistSans = Geist({
@@ -11,6 +12,8 @@ import "./globals.css";
 //   subsets: ["latin"],
 // });
 
+const inter = Inter({ subsets: ["latin"] });
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,13 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" dir="ltr">
-      <body
-      // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {/* <Providers> */}
-        {children}
-        {/* </Providers> */}
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }

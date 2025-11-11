@@ -183,7 +183,12 @@ export default function AppNavbar() {
           </Dropdown>
         ) : (
           <NavbarItem>
-            <Button as={Link} href="/auth" variant="flat">
+            <Button
+              as={Link}
+              href="/auth"
+              variant="flat"
+              className="bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold"
+            >
               Login / Signup
             </Button>
           </NavbarItem>

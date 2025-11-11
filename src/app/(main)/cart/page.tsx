@@ -97,7 +97,7 @@ export default function CartPage() {
             <Button
               as={Link}
               href="/products"
-              color="primary"
+             className="bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold"
               size="lg"
               startContent={<Package className="w-4 h-4" />}
             >
@@ -131,7 +131,6 @@ export default function CartPage() {
                       <img
                         src={`https://filerget.com/storage/${item.product.image_path}` || "/placeholder.svg"}
                         alt={item.product.title}
-                        // fill
                         className="rounded-lg object-cover aspect-square"
                       />
                     </div>
@@ -231,7 +230,7 @@ export default function CartPage() {
               <Button
                 color="primary"
                 size="lg"
-                className="w-full font-semibold"
+                className="w-full font-semibold bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white"
                 onClick={handleCheckout}
                 disabled={checkingOut}
                 startContent={

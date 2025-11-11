@@ -33,6 +33,7 @@ import {
   Download,
 } from "lucide-react";
 import Link from "next/link";
+import { CommentsSection } from "@/app/components/Commentsection";
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -231,7 +232,7 @@ export default function ProductDetail() {
 
             <div>
               <h3 className="text-lg font-semibold mb-2">Description</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed text-justify">
                 {product.description}
               </p>
             </div>
@@ -289,9 +290,9 @@ export default function ProductDetail() {
 
               <div className="flex gap-3">
                 <Button
-                  color="primary"
+                
                   size="lg"
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold"
                   startContent={
                     creating ? (
                       <Spinner size="sm" color="white" />
@@ -378,6 +379,7 @@ export default function ProductDetail() {
         </div>
 
         <div className="mt-12">
+        <CommentsSection productSlug={slug} />
           {/* <Card>
             <CardBody>
               <Tabs aria-label="Product information" size="lg" fullWidth>

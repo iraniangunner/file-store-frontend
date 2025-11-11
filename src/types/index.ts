@@ -36,3 +36,15 @@ export interface Order {
   // provider_invoice_url?: string
   download_url: string | null;
 }
+
+export interface Comment {
+  id: number
+  user_id: number
+  content: string
+  reply: string | null
+  created_at: string
+  user: {
+    id: number
+    name: string
+  }
+}

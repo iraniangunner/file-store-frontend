@@ -235,7 +235,7 @@ export default function ProductGrid() {
     );
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
+    <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-16 mt-16">
       <div className="mb-8">
         <div className="relative w-full max-w-2xl mx-auto">
           <Input
@@ -358,7 +358,7 @@ export default function ProductGrid() {
             </div>
 
             <Button
-              color="primary"
+            
               size="lg"
               onPress={() => {
                 if (priceRange !== null) {
@@ -369,7 +369,7 @@ export default function ProductGrid() {
                   setPage(1);
                 }
               }}
-              className="w-full font-bold shadow-lg"
+              className="w-full shadow-lg bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold"
               startContent={<Filter className="w-5 h-5" />}
             >
               Apply Filters
