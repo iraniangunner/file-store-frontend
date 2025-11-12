@@ -42,9 +42,11 @@ export function ProductDetail() {
   const [creating, setCreating] = useState(false);
   // const [quantity, setQuantity] = useState(1);
   // const [selectedImage, setSelectedImage] = useState(0);
+  // const [relatedProducts, setRelatedProducts] = useState<Product[] | null>([]);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [liking, setLiking] = useState(false);
+
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -79,6 +81,26 @@ export function ProductDetail() {
 
     fetchData();
   }, [slug]);
+
+  //   useEffect(() => {
+  //     async function fetchRelated() {
+  //       if (!product) return;
+
+  //       try {
+  //         const categoryIds = product.categories.map((c:any) => c.id).join(",");
+  //         // API عمومی products با فیلتر دسته‌بندی
+  //         const res = await api.get(`/products?categories=${categoryIds}`);
+  //         console.log(res.data.data)
+  //         // محصول جاری را حذف می‌کنیم
+  //         const related = res.data.data.filter((p: Product) => p.id !== product.id);
+  //         setRelatedProducts(related);
+  //       } catch (err) {
+  //         console.error("Failed to fetch related products", err);
+  //       }
+  //     }
+
+  //     fetchRelated();
+  //   }, [product]);
 
   async function handleAddToCart() {
     if (!product) return;
@@ -153,42 +175,16 @@ export function ProductDetail() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <div>
-          {product.image_url && (
-            <div className="overflow-hidden">
-              <Image
-                src={product.image_url || "/placeholder.svg"}
-                alt={product.title}
-                className="w-full h-full object-cover"
-                radius="none"
-              />
-            </div>
-          )}
-
-          {/* {productImages.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {productImages.map((img, idx) => (
-                  <Card
-                    key={idx}
-                    isPressable
-                    onPress={() => setSelectedImage(idx)}
-                    className={`overflow-hidden cursor-pointer transition-all ${
-                      selectedImage === idx
-                        ? "ring-2 ring-primary"
-                        : "opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    <CardBody className="p-0">
-                      <Image
-                        src={img || "/placeholder.svg"}
-                        alt={`${product.title} ${idx + 1}`}
-                        className="w-full aspect-square object-cover"
-                        radius="none"
-                      />
-                    </CardBody>
-                  </Card>
-                ))}
+            {product.image_url && (
+              <div className="overflow-hidden">
+                <Image
+                  src={product.image_url || "/placeholder.svg"}
+                  alt={product.title}
+                  className="w-full h-full object-cover"
+                  radius="none"
+                />
               </div>
-            )} */}
+            )}
           </div>
 
           <div className="space-y-6">
@@ -198,37 +194,12 @@ export function ProductDetail() {
               </h1>
 
               {product.id && <ProductRating productSlug={product.slug} />}
-              {/* {product.rating && (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={18}
-                        className={
-                          i < Math.floor(product.rating!)
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
-                        }
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    {product.rating} ({product.reviews || 0} reviews)
-                  </span>
-                </div>
-              )} */}
             </div>
 
             <div className="flex items-baseline gap-3">
               <span className="text-4xl font-bold text-primary">
                 {isFree ? "Free" : `$${product.price}`}
               </span>
-              {/* {!isFree && (
-                <span className="text-xl text-gray-400 line-through">
-                  ${(Number(product.price) * 1.2).toFixed(2)}
-                </span>
-              )} */}
             </div>
 
             <Divider />
@@ -239,20 +210,6 @@ export function ProductDetail() {
                 {product.description}
               </p>
             </div>
-
-            {/* {product.features && product.features.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Key Features</h3>
-                <ul className="space-y-2">
-                  {product.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                      <span className="text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )} */}
 
             <Divider />
 
@@ -293,7 +250,6 @@ export function ProductDetail() {
 
               <div className="flex gap-3">
                 <Button
-                
                   size="lg"
                   className="flex-1 bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold"
                   startContent={
@@ -382,44 +338,38 @@ export function ProductDetail() {
         </div>
 
         <div className="mt-12">
-        <CommentsSection productSlug={slug} />
-          {/* <Card>
-            <CardBody>
-              <Tabs aria-label="Product information" size="lg" fullWidth>
-                <Tab key="description" title="Description">
-                  <div className="py-6">
-                    <p className="text-gray-600 leading-relaxed">
-                      {product.description}
-                    </p>
-                  </div>
-                </Tab>
-                {product.specifications && (
-                  <Tab key="specifications" title="Specifications">
-                    <div className="py-6">
-                      <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.entries(product.specifications).map(
-                          ([key, value]) => (
-                            <div key={key} className="flex flex-col gap-1">
-                              <dt className="text-sm font-semibold text-gray-900">
-                                {key}
-                              </dt>
-                              <dd className="text-sm text-gray-600">{value}</dd>
-                            </div>
-                          )
-                        )}
-                      </dl>
-                    </div>
-                  </Tab>
-                )}
-                <Tab key="reviews" title={`Reviews (0)`}>
-                  <div className="py-6 text-center text-gray-500">
-                    No reviews yet. Be the first to review this product!
-                  </div>
-                </Tab>
-              </Tabs>
-            </CardBody>
-          </Card> */}
+          <CommentsSection productSlug={slug} />
         </div>
+
+        {/* {relatedProducts.length > 0 && (
+  <div className="mt-12">
+    <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+    <div className="flex gap-6 overflow-x-auto scrollbar-none px-2 py-1">
+      {relatedProducts.map((rp) => (
+        <Card
+          key={rp.id}
+          className="min-w-[220px] flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl"
+        >
+          <CardBody className="p-2">
+            <Link href={`/products/${rp.slug}`}>
+              <div className="overflow-hidden rounded-lg relative group">
+                <Image
+                  src={rp.image_url ? `https://filerget.com/${rp.image_url}` : "/placeholder.svg"}
+                  alt={rp.title}
+                  className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <h3 className="mt-3 font-semibold text-sm text-gray-800 truncate">{rp.title}</h3>
+              <span className="text-primary font-bold text-sm">
+                {Number(rp.price) === 0 ? "Free" : `$${rp.price}`}
+              </span>
+            </Link>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  </div>
+        )} */}
       </div>
     </div>
   );

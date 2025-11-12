@@ -9,6 +9,7 @@ import {
   TableRow,
   TableCell,
   Button,
+  Spinner,
 } from "@heroui/react";
 import { Pagination } from "@heroui/pagination";
 import { Trash2, Eye } from "lucide-react";
@@ -76,7 +77,7 @@ export default function CommentsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-lg">
-        Loading...
+       <Spinner/>
       </div>
     );
   }

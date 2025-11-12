@@ -111,7 +111,7 @@ export default function CommentsTable() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-lg">
-        Loading...
+        <Spinner/>
       </div>
     );
   }

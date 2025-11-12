@@ -8,6 +8,8 @@ import {
   TableRow,
   TableCell,
   Button,
+  Spinner,
+  Input,
 } from "@heroui/react";
 import { Pagination } from "@heroui/pagination";
 import { Pencil, Trash2 } from "lucide-react";
@@ -26,7 +28,19 @@ export default function ProductTable() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const rowsPerPage = 6;
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // وقتی search تغییر می‌کنه، به صفحه 1 برگرد
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [search]);
 
   // Fetch current user
   useEffect(() => {
@@ -45,34 +59,40 @@ export default function ProductTable() {
     fetchUser();
   }, []);
 
-  // Fetch products with server-side pagination
-  const fetchProducts = useCallback(async (pageNumber: number = 1) => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `https://filerget.com/api/products?page=${pageNumber}&per_page=${rowsPerPage}`
-      );
-      const data = await response.json();
-      setProducts(data.data);
-      setTotalPages(data.last_page || 1);
-      setPage(data.current_page || 1);
-    } catch (err) {
-      console.error("Failed to fetch products:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Fetch products with server-side pagination & search
+  const fetchProducts = useCallback(
+    async (pageNumber: number = 1, searchTerm: string = "") => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `https://filerget.com/api/products?page=${pageNumber}&per_page=${rowsPerPage}&search=${encodeURIComponent(
+            searchTerm
+          )}`
+        );
+        const data = await response.json();
+        setProducts(data.data);
+        setTotalPages(data.last_page || 1);
+        setPage(data.current_page || 1);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
+  // Fetch products on page change or debounced search
   useEffect(() => {
     if (user && user.role === "admin") {
-      fetchProducts(page);
+      fetchProducts(page, debouncedSearch);
     }
-  }, [page, user, fetchProducts]);
+  }, [page, debouncedSearch, user, fetchProducts]);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-lg">
-        Loading...
+        <Spinner />
       </div>
     );
   }
@@ -89,7 +109,19 @@ export default function ProductTable() {
 
   return (
     <div className="p-6 flex flex-col gap-6">
-      <CreateProductModal onProductCreated={() => fetchProducts(page)} />
+      {/* Search Bar */}
+      <div className="flex justify-between items-center gap-4 mb-4">
+        <CreateProductModal
+          onProductCreated={() => fetchProducts(page, debouncedSearch)}
+        />
+        <Input
+          placeholder="Search products..."
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          className="max-w-sm"
+        />
+      </div>
+
       <Table
         aria-label="Products Table with Pagination"
         className="shadow-md rounded-2xl"
@@ -152,7 +184,7 @@ export default function ProductTable() {
           product={editingProduct}
           isOpen={!!editingProduct}
           onClose={() => setEditingProduct(null)}
-          onProductUpdated={() => fetchProducts(page)}
+          onProductUpdated={() => fetchProducts(page, debouncedSearch)}
         />
       )}
 
@@ -160,7 +192,7 @@ export default function ProductTable() {
         <DeleteProductModal
           product={deletingProduct}
           onClose={() => setDeletingProduct(null)}
-          onDeleted={() => fetchProducts(page)}
+          onDeleted={() => fetchProducts(page, debouncedSearch)}
         />
       )}
     </div>

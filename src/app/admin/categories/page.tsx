@@ -8,6 +8,7 @@ import {
   TableRow,
   TableCell,
   Button,
+  Spinner,
 } from "@heroui/react";
 import { Pagination } from "@heroui/pagination";
 import { Pencil, Trash2 } from "lucide-react";
@@ -82,7 +83,7 @@ export default function CategoryTable() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-lg">
-        Loading...
+        <Spinner />
       </div>
     );
   }

@@ -57,6 +57,12 @@ export default function MainSideBar() {
       icon: <Settings size={18} />,
       href: "/admin/product-comments",
     },
+
+    {
+      name: "Product Ratings",
+      icon: <Settings size={18} />,
+      href: "/admin/product-ratings",
+    },
   ];
 
   return (
@@ -85,7 +91,7 @@ export default function MainSideBar() {
 
       {/* 🔹 سایدبار اصلی */}
       <aside
-        className={`fixed md:relative top-0 left-0 h-screen bg-background border-r border-default z-50 transition-all duration-300 ease-in-out
+        className={`fixed md:relative top-0 left-0 bg-background border-r border-default z-50 transition-all duration-300 ease-in-out
           ${
             mobileOpen && !isDesktop
               ? "translate-x-0"

@@ -25,7 +25,6 @@ export function ProductRating({ productSlug }: ProductRatingProps) {
       const res = await api.get(`/products/${productSlug}/rating`);
       setAverageRating(res.data.average_rating); // مثلا 4.3
       setReviewsCount(res.data.reviews_count);
-      setUserRating(res.data.user_rating || 0);
     } catch (err) {
       console.error("Failed to fetch rating", err);
     }
