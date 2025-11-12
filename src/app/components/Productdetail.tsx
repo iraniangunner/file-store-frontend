@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CommentsSection } from "@/app/components/Commentsection";
+import { ProductRating } from "./Productrating";
 
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -195,6 +196,8 @@ export function ProductDetail() {
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
                 {product.title}
               </h1>
+
+              {product.id && <ProductRating productSlug={product.slug} />}
               {/* {product.rating && (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
