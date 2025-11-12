@@ -1,5 +1,8 @@
-"use client"; 
-import { MainSideBar } from "./_components/main-sidebar";
+import dynamic from "next/dynamic";
+
+const MainSideBar = dynamic(() => import("./_components/main-sidebar"), {
+  ssr: false,
+});
 
 export default function AdminLayout({
   children,

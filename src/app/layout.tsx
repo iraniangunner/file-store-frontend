@@ -12,6 +12,12 @@ import "./globals.css";
 //   subsets: ["latin"],
 // });
 
+export const metadata = {
+  verification: {
+    google: "mDyxRv4048g-2nWuFLoEMSy7OPQQD8up6gcsw438vaQ", 
+  },
+};
+
 const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({

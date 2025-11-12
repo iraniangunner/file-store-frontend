@@ -8,7 +8,7 @@ import { useFormState } from "react-dom";
 import { logoutAction } from "../../../app/_actions/logout";
 import { useRouter } from "next/navigation";
 
-export function MainSideBar() {
+export default function MainSideBar() {
   const [open, setOpen] = useState(true); // فقط برای دسکتاپ
   const [mobileOpen, setMobileOpen] = useState(false); // برای موبایل
   const [isDesktop, setIsDesktop] = useState(false);
