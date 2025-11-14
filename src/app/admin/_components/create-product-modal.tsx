@@ -12,13 +12,122 @@ import {
   Spinner,
 } from "@heroui/react";
 import { Plus } from "lucide-react";
-import api from "@/lib/api"; // axios instance
+import api from "@/lib/api";
 
+// =======================
+// Types
+// =======================
 interface Category {
   id: number;
   name: string;
+  parent_id: number | null;
 }
 
+interface CategoryTree extends Category {
+  children: CategoryTree[];
+}
+
+// =======================
+// Tree Builder
+// =======================
+function buildTree(flat: Category[]): CategoryTree[] {
+  const map: Record<number, CategoryTree> = {};
+  const roots: CategoryTree[] = [];
+
+  flat.forEach((cat) => (map[cat.id] = { ...cat, children: [] }));
+
+  flat.forEach((cat) => {
+    if (cat.parent_id === null) {
+      roots.push(map[cat.id]);
+    } else if (map[cat.parent_id]) {
+      map[cat.parent_id].children.push(map[cat.id]);
+    }
+  });
+
+  return roots;
+}
+
+// =======================
+// Tree Node Component
+// =======================
+const CategoryNode = ({
+  node,
+  form,
+  setForm,
+  expanded,
+  setExpanded,
+}: {
+  node: CategoryTree;
+  form: any;
+  setForm: any;
+  expanded: Record<number, boolean>;
+  setExpanded: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
+}) => {
+  const hasChildren = node.children.length > 0;
+  const isExpanded = expanded[node.id] ?? true; // Default OPEN
+
+  return (
+    <div className="ml-2 my-1">
+      <div className="flex items-center gap-2">
+        {/* Toggle parent */}
+        {hasChildren && (
+          <button
+            className="w-5 text-gray-600"
+            onClick={() =>
+              setExpanded((prev) => ({ ...prev, [node.id]: !isExpanded }))
+            }
+          >
+            {isExpanded ? "▾" : "▸"}
+          </button>
+        )}
+
+        {/* Parent = no checkbox | Child = checkbox */}
+        {node.parent_id === null ? (
+          <span className="font-semibold">{node.name}</span>
+        ) : (
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              value={node.id}
+              checked={form.category_ids.includes(String(node.id))}
+              onChange={(e) => {
+                const id = String(node.id);
+                setForm((p: any) => {
+                  const updated = e.target.checked
+                    ? [...p.category_ids, id]
+                    : p.category_ids.filter((x: string) => x !== id);
+
+                  return { ...p, category_ids: updated };
+                });
+              }}
+            />
+            {node.name}
+          </label>
+        )}
+      </div>
+
+      {/* Render children */}
+      {hasChildren && isExpanded && (
+        <div className="ml-4 border-l pl-3">
+          {node.children.map((child) => (
+            <CategoryNode
+              key={child.id}
+              node={child}
+              form={form}
+              setForm={setForm}
+              expanded={expanded}
+              setExpanded={setExpanded}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// =======================
+// MAIN COMPONENT
+// =======================
 export function CreateProductModal({
   onProductCreated,
 }: {
@@ -26,14 +135,10 @@ export function CreateProductModal({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [categories, setCategories] = useState<Category[]>([]);
-  // const [form, setForm] = useState({
-  //   title: "",
-  //   description: "",
-  //   price: "",
-  //   file: null as File | null,
-  //   category_ids: [] as string[], // آرایه چندتایی
-  // });
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({}); // tree expand state
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -43,7 +148,7 @@ export function CreateProductModal({
     category_ids: [] as string[],
   });
 
-  // Fetch categories
+  // Fetch Categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -55,53 +160,6 @@ export function CreateProductModal({
     };
     fetchCategories();
   }, []);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setForm((prev) => ({ ...prev, file }));
-  };
-
-  // const handleSubmit = async () => {
-  //   if (
-  //     !form.title ||
-  //     !form.description ||
-  //     !form.price ||
-  //     !form.file ||
-  //     form.category_ids.length === 0
-  //   ) {
-  //     alert("Please fill all fields, upload a file, and select at least one category.");
-  //     return;
-  //   }
-
-  //   setIsSubmitting(true);
-
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("title", form.title);
-  //     formData.append("description", form.description);
-  //     formData.append("price", form.price);
-  //     formData.append("file", form.file);
-
-  //     // اضافه کردن همه دسته‌ها به فرم دیتا
-  //     form.category_ids.forEach((id) => {
-  //       formData.append("category_ids[]", id);
-  //     });
-
-  //     await api.post("/products", formData, {
-  //       headers: { "Content-Type": "multipart/form-data" },
-  //       requiresAuth: true,
-  //     } as any);
-
-  //     setIsOpen(false);
-  //     setForm({ title: "", description: "", price: "", file: null, category_ids: [] });
-  //     onProductCreated?.(); // Refresh product list
-  //   } catch (error) {
-  //     console.error("Error creating product:", error);
-  //     alert("Failed to create product. Please try again.");
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
 
   const handleSubmit = async () => {
     if (!form.title || !form.price || !form.file) {
@@ -118,12 +176,8 @@ export function CreateProductModal({
       formData.append("price", form.price);
       formData.append("file", form.file);
 
-      // ✅ Add image if selected
-      if (form.image) {
-        formData.append("image", form.image);
-      }
+      if (form.image) formData.append("image", form.image);
 
-      // ✅ Add categories
       form.category_ids.forEach((id) => {
         formData.append("category_ids[]", id);
       });
@@ -139,21 +193,23 @@ export function CreateProductModal({
         description: "",
         price: "",
         file: null,
-        image: null, // ✅ reset image
+        image: null,
         category_ids: [],
       });
+
       onProductCreated?.();
     } catch (error) {
       console.error("Error creating product:", error);
-      alert("Failed to create product. Please try again.");
+      alert("Failed to create product.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const tree = buildTree(categories);
+
   return (
     <>
-      {/* === Create Product Button === */}
       <Button
         color="primary"
         startContent={<Plus size={18} />}
@@ -162,7 +218,6 @@ export function CreateProductModal({
         Create Product
       </Button>
 
-      {/* === Modal === */}
       <Modal isOpen={isOpen} onOpenChange={setIsOpen}>
         <ModalContent>
           <ModalHeader>Create New Product</ModalHeader>
@@ -175,6 +230,7 @@ export function CreateProductModal({
                 setForm((p) => ({ ...p, title: e.target.value }))
               }
             />
+
             <Textarea
               label="Description"
               placeholder="Enter product description"
@@ -183,6 +239,7 @@ export function CreateProductModal({
                 setForm((p) => ({ ...p, description: e.target.value }))
               }
             />
+
             <Input
               label="Price ($)"
               type="number"
@@ -193,72 +250,65 @@ export function CreateProductModal({
               }
             />
 
-            {/* === Multi-category selection === */}
+            {/* ==================== CATEGORY TREE ==================== */}
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">
                 Categories
               </label>
-              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto border rounded-lg p-2">
-                {categories.map((cat) => (
-                  <label key={cat.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      value={cat.id}
-                      checked={form.category_ids.includes(String(cat.id))}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setForm((p) => {
-                          const arr = [...p.category_ids];
-                          if (e.target.checked) arr.push(value);
-                          else arr.splice(arr.indexOf(value), 1);
-                          return { ...p, category_ids: arr };
-                        });
-                      }}
-                    />
-                    {cat.name}
-                  </label>
+
+              <div className="max-h-60 overflow-y-auto border rounded-lg p-2">
+                {tree.map((root) => (
+                  <CategoryNode
+                    key={root.id}
+                    node={root}
+                    form={form}
+                    setForm={setForm}
+                    expanded={expanded}
+                    setExpanded={setExpanded}
+                  />
                 ))}
               </div>
             </div>
 
-            {/* Image upload */}
+            {/* Product Image */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Upload Product Image (PNG, JPG, GIF, etc.)
+              <label className="text-sm font-medium mb-1 block">
+                Product Image
               </label>
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
-                  const image = e.target.files?.[0] || null;
-                  setForm((prev) => ({ ...prev, image }));
-                }}
-                className="block w-full border rounded-lg p-2 text-sm"
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    image: e.target.files?.[0] || null,
+                  }))
+                }
               />
               {form.image && (
                 <img
                   src={URL.createObjectURL(form.image)}
-                  alt="Preview"
-                  className="mt-2 w-32 h-32 object-cover rounded-lg border"
+                  className="mt-2 w-32 h-32 rounded object-cover border"
                 />
               )}
             </div>
-            {/* === File upload === */}
+
+            {/* PDF Upload */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Upload File (PDF)
+              <label className="text-sm font-medium mb-1 block">
+                Upload PDF
               </label>
               <input
                 type="file"
                 accept="application/pdf"
-                onChange={handleFileChange}
-                className="block w-full border rounded-lg p-2 text-sm"
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    file: e.target.files?.[0] || null,
+                  }))
+                }
+                className="block border rounded p-2 text-sm"
               />
-              {form.file && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {form.file.name} ({(form.file.size / 1024).toFixed(1)} KB)
-                </p>
-              )}
             </div>
 
             <Button

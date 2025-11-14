@@ -14,9 +14,17 @@ import {
 import { Product } from "@/types";
 import api from "@/lib/api";
 
+// =======================
+// Types
+// =======================
 interface Category {
   id: number;
   name: string;
+  parent_id: number | null;
+}
+
+interface CategoryTree extends Category {
+  children: CategoryTree[];
 }
 
 interface EditProductModalProps {
@@ -26,36 +34,123 @@ interface EditProductModalProps {
   onProductUpdated?: () => void;
 }
 
+// =======================
+// Tree Builder
+// =======================
+function buildTree(flat: Category[]): CategoryTree[] {
+  const map: Record<number, CategoryTree> = {};
+  const roots: CategoryTree[] = [];
+
+  flat.forEach((cat) => (map[cat.id] = { ...cat, children: [] }));
+
+  flat.forEach((cat) => {
+    if (cat.parent_id === null) {
+      roots.push(map[cat.id]);
+    } else if (map[cat.parent_id]) {
+      map[cat.parent_id].children.push(map[cat.id]);
+    }
+  });
+
+  return roots;
+}
+
+// =======================
+// Tree Node Component
+// =======================
+const CategoryNode = ({
+  node,
+  form,
+  setForm,
+  expanded,
+  setExpanded,
+}: {
+  node: CategoryTree;
+  form: any;
+  setForm: any;
+  expanded: Record<number, boolean>;
+  setExpanded: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
+}) => {
+  const hasChildren = node.children.length > 0;
+  const isExpanded = expanded[node.id] ?? true;
+
+  return (
+    <div className="ml-2 my-1">
+      <div className="flex items-center gap-2">
+        {hasChildren && (
+          <button
+            className="w-5 text-gray-600"
+            onClick={() =>
+              setExpanded((prev) => ({ ...prev, [node.id]: !isExpanded }))
+            }
+          >
+            {isExpanded ? "▾" : "▸"}
+          </button>
+        )}
+
+        {node.parent_id === null ? (
+          <span className="font-semibold">{node.name}</span>
+        ) : (
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              value={node.id}
+              checked={form.category_ids.includes(String(node.id))}
+              onChange={(e) => {
+                const id = String(node.id);
+                setForm((p: any) => {
+                  const updated = e.target.checked
+                    ? [...p.category_ids, id]
+                    : p.category_ids.filter((x: string) => x !== id);
+                  return { ...p, category_ids: updated };
+                });
+              }}
+            />
+            {node.name}
+          </label>
+        )}
+      </div>
+
+      {hasChildren && isExpanded && (
+        <div className="ml-4 border-l pl-3">
+          {node.children.map((child) => (
+            <CategoryNode
+              key={child.id}
+              node={child}
+              form={form}
+              setForm={setForm}
+              expanded={expanded}
+              setExpanded={setExpanded}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// =======================
+// MAIN COMPONENT
+// =======================
 export function EditProductModal({
   product,
   isOpen,
   onClose,
   onProductUpdated,
 }: EditProductModalProps) {
-  // const [form, setForm] = useState({
-  //   title: "",
-  //   description: "",
-  //   price: "",
-  //   file: null as File | null,
-  //   category_ids: [] as string[], // تغییر به چند دسته
-  // });
-
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     file: null as File | null,
-    image: null as File | null, // ✅ new
+    image: null as File | null,
     category_ids: [] as string[],
   });
+
   const [categories, setCategories] = useState<Category[]>([]);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-
-  
-
-  // بارگذاری دسته‌ها
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -68,77 +163,21 @@ export function EditProductModal({
     fetchCategories();
   }, []);
 
-  // مقداردهی اولیه فرم با محصول فعلی
-  // useEffect(() => {
-  //   if (product) {
-  //     setForm({
-  //       title: product.title || "",
-  //       description: product.description || "",
-  //       price: product.price?.toString() || "",
-  //       file: null,
-  //       category_ids: product.categories?.map((c:any) => String(c.id)) || [],
-  //     });
-  //   }
-  // }, [product]);
   useEffect(() => {
-    if (product) {
-      setForm({
-        title: product.title || "",
-        description: product.description || "",
-        price: product.price?.toString() || "",
-        file: null,
-        image: null, // ✅ new
-        category_ids: product.categories?.map((c: any) => String(c.id)) || [],
-      });
-    }
+    if (!product) return;
+    setForm({
+      title: product.title || "",
+      description: product.description || "",
+      price: product.price?.toString() || "",
+      file: null,
+      image: null,
+      category_ids: product.categories?.map((c: any) => String(c.id)) || [],
+    });
   }, [product]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setForm((prev) => ({ ...prev, file }));
+    setForm((prev) => ({ ...prev, file: e.target.files?.[0] || null }));
   };
-
-  // const handleSubmit = async () => {
-  //   if (!product) return;
-  //   if (
-  //     !form.title ||
-  //     !form.description ||
-  //     !form.price ||
-  //     form.category_ids.length === 0
-  //   ) {
-  //     alert(
-  //       "Please fill in all required fields and select at least one category."
-  //     );
-  //     return;
-  //   }
-
-  //   setIsSubmitting(true);
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("title", form.title);
-  //     formData.append("description", form.description);
-  //     formData.append("price", form.price);
-
-  //     // اضافه کردن همه دسته‌ها به فرم دیتا
-  //     form.category_ids.forEach((id) => formData.append("category_ids[]", id));
-
-  //     if (form.file) formData.append("file", form.file);
-
-  //     await api.post(`/products/${product.slug}?_method=PUT`, formData, {
-  //       headers: { "Content-Type": "multipart/form-data" },
-  //       requiresAuth: true,
-  //     } as any);
-
-  //     onProductUpdated?.();
-  //     onClose();
-  //   } catch (error) {
-  //     console.error("Error updating product:", error);
-  //     alert("Failed to update product.");
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
 
   const handleSubmit = async () => {
     if (!product) return;
@@ -146,24 +185,24 @@ export function EditProductModal({
       alert("Please fill in all required fields and select at least one category.");
       return;
     }
-  
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("title", form.title);
       formData.append("description", form.description);
       formData.append("price", form.price);
-  
+
       form.category_ids.forEach((id) => formData.append("category_ids[]", id));
-  
+
       if (form.file) formData.append("file", form.file);
-      if (form.image) formData.append("image", form.image); // ✅ new line
-  
+      if (form.image) formData.append("image", form.image);
+
       await api.post(`/products/${product.slug}?_method=PUT`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         requiresAuth: true,
       } as any);
-  
+
       onProductUpdated?.();
       onClose();
     } catch (error) {
@@ -174,11 +213,10 @@ export function EditProductModal({
     }
   };
 
-
   const handleDeleteImage = async () => {
     if (!product) return;
     if (!confirm("Are you sure you want to delete this image?")) return;
-  
+
     setIsSubmitting(true);
     try {
       await api.delete(`/products/${product.slug}/image`, { requiresAuth: true } as any);
@@ -192,8 +230,7 @@ export function EditProductModal({
       setIsSubmitting(false);
     }
   };
-  
-  
+
   const handleDownload = async () => {
     if (!product || !product.file_path) return;
     setIsDownloading(true);
@@ -205,7 +242,6 @@ export function EditProductModal({
 
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
       a.download = product.file_path.split("/").pop() || "file.pdf";
@@ -223,7 +259,7 @@ export function EditProductModal({
 
   if (!product) return null;
 
-
+  const tree = buildTree(categories);
 
   return (
     <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -238,9 +274,7 @@ export function EditProductModal({
           <Textarea
             label="Description"
             value={form.description}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, description: e.target.value }))
-            }
+            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
           />
           <Input
             label="Price ($)"
@@ -249,70 +283,50 @@ export function EditProductModal({
             onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
           />
 
-          {/* چند دسته با checkbox */}
+          {/* ==================== CATEGORY TREE ==================== */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
               Categories
             </label>
-            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto border rounded-lg p-2">
-              {categories.map((cat) => (
-                <label key={cat.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    value={cat.id}
-                    checked={form.category_ids.includes(String(cat.id))}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setForm((p) => {
-                        const arr = [...p.category_ids];
-                        if (e.target.checked) arr.push(value);
-                        else arr.splice(arr.indexOf(value), 1);
-                        return { ...p, category_ids: arr };
-                      });
-                    }}
-                  />
-                  {cat.name}
-                </label>
+            <div className="max-h-60 overflow-y-auto border rounded-lg p-2">
+              {tree.map((root) => (
+                <CategoryNode
+                  key={root.id}
+                  node={root}
+                  form={form}
+                  setForm={setForm}
+                  expanded={expanded}
+                  setExpanded={setExpanded}
+                />
               ))}
             </div>
           </div>
 
+          {/* Product Image */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              Upload New Product Image (PNG, JPG, etc.)
+            <label className="text-sm font-medium mb-1 block">
+              Upload New Product Image
             </label>
             <Input
               type="file"
               accept="image/*"
-              onChange={(e) => {
-                const image = e.target.files?.[0] || null;
-                setForm((prev) => ({ ...prev, image }));
-              }}
-              className="block w-full border rounded-lg p-2 text-sm"
+              onChange={(e) =>
+                setForm((p) => ({ ...p, image: e.target.files?.[0] || null }))
+              }
             />
-
-            {/* Show current or new image */}
             {form.image ? (
+              <img
+                src={URL.createObjectURL(form.image)}
+                alt="Preview"
+                className="w-24 h-24 rounded-lg object-cover border mt-2"
+              />
+            ) : product.image_url ? (
               <div className="mt-2">
-                <p className="text-xs text-gray-500 mb-1">
-                  Selected: {form.image.name} (
-                  {(form.image.size / 1024).toFixed(1)} KB)
-                </p>
-                <img
-                  src={URL.createObjectURL(form.image)}
-                  alt="Preview"
-                  className="w-24 h-24 rounded-lg object-cover border"
-                />
-              </div>
-            ) : product.image_url && !form.image ? (
-              <div className="mt-2">
-                <p className="text-xs text-gray-400 mb-1">Current Image:</p>
                 <img
                   src={`https://filerget.com${product.image_url}`}
                   alt={product.title}
                   className="w-24 h-24 rounded-lg object-cover border"
                 />
-            
                 <Button
                   color="danger"
                   size="sm"
@@ -329,7 +343,7 @@ export function EditProductModal({
             )}
           </div>
 
-          {/* فایل */}
+          {/* PDF File */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
               Upload New File (PDF)
@@ -344,23 +358,21 @@ export function EditProductModal({
               <p className="text-xs text-gray-500 mt-1">
                 {form.file.name} ({(form.file.size / 1024).toFixed(1)} KB)
               </p>
-            ) : (
-              product.file_path && (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-gray-400">
-                    Current file: {product.file_path.split("/").pop()}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="flat"
-                    onPress={handleDownload}
-                    disabled={isDownloading}
-                  >
-                    {isDownloading ? <Spinner size="sm" /> : "Download"}
-                  </Button>
-                </div>
-              )
-            )}
+            ) : product.file_path ? (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-400">
+                  Current file: {product.file_path.split("/").pop()}
+                </span>
+                <Button
+                  size="sm"
+                  variant="flat"
+                  onPress={handleDownload}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? <Spinner size="sm" /> : "Download"}
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <Button
@@ -382,3 +394,4 @@ export function EditProductModal({
     </Modal>
   );
 }
+

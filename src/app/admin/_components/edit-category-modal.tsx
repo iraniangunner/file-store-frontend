@@ -17,6 +17,8 @@ interface Category {
   id: number;
   name: string;
   description: string;
+  is_active: boolean;
+  parent_id: number | null;
 }
 
 interface EditCategoryModalProps {
@@ -35,8 +37,11 @@ export function EditCategoryModal({
   const [form, setForm] = useState({
     name: "",
     description: "",
+    is_active: true,
+    parent_id: null as number | null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // مقداردهی فرم وقتی category تغییر می‌کند
   useEffect(() => {
@@ -44,9 +49,22 @@ export function EditCategoryModal({
       setForm({
         name: category.name || "",
         description: category.description || "",
+        is_active: category.is_active ?? true,
+        parent_id: category.parent_id ?? null,
       });
     }
   }, [category]);
+
+  // گرفتن دسته‌بندی‌ها برای select parent
+  useEffect(() => {
+    if (isOpen) {
+      api.get("/categories").then((res) => {
+        if (res.data.success) {
+          setCategories(res.data.data.filter((c: Category) => c.id !== category?.id));
+        }
+      });
+    }
+  }, [isOpen, category]);
 
   const handleSubmit = async () => {
     if (!category) return;
@@ -90,6 +108,37 @@ export function EditCategoryModal({
               setForm((p) => ({ ...p, description: e.target.value }))
             }
           />
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
+            />
+            Active
+          </label>
+
+          <label>
+            Parent Category
+            <select
+              value={form.parent_id ?? ""}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  parent_id: e.target.value ? Number(e.target.value) : null,
+                }))
+              }
+              className="w-full border rounded p-2 mt-1"
+            >
+              <option value="">No Parent</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <Button
             color="primary"
             onPress={handleSubmit}
