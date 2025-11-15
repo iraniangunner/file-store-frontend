@@ -25,6 +25,7 @@ import {
   DollarSign,
   X,
   ChevronRight,
+  File,
 } from "lucide-react";
 import type { Product } from "@/types";
 import { ProductCard } from "./Productcard";
@@ -95,6 +96,9 @@ export default function ProductGrid() {
     const page = Number(params.get("page")) || 1;
     const min = params.get("min_price");
     const max = params.get("max_price");
+    const fileTypes = params.get("file_types")
+      ? params.get("file_types")!.split(",")
+      : [];
 
     setSelectedCategories(cats);
     setSearchInput(search);
@@ -107,10 +111,12 @@ export default function ProductGrid() {
         : null;
     setPriceRange(pr);
 
-    // 🔥 اضافه کردن این خط:
+    setSelectedFileTypes(fileTypes);
+
     setAppliedFilters({
       categories: cats,
       priceRange: pr ?? [0, 0],
+      fileTypes: fileTypes,
     });
 
     setInitialLoaded(true);
@@ -120,6 +126,10 @@ export default function ProductGrid() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // file-types
+  const [fileTypes, setFileTypes] = useState<string[]>([]);
+  const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
 
   // --- search & debounce ---
   const [searchInput, setSearchInput] = useState("");
@@ -154,6 +164,7 @@ export default function ProductGrid() {
   const [appliedFilters, setAppliedFilters] = useState({
     categories: [] as string[],
     priceRange: [0, 0] as [number, number],
+    fileTypes: [] as string[],
   });
 
   // --- UI state ---
@@ -176,7 +187,6 @@ export default function ProductGrid() {
 
         setCategories(data);
 
-        // 🔥 به‌صورت پیش‌فرض همه والدهایی که child دارند را باز کن
         const expandedDefault: Record<number, boolean> = {};
 
         const walk = (nodes: CategoryApi[]) => {
@@ -228,6 +238,27 @@ export default function ProductGrid() {
     return () => ctrl.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const res = await fetch(
+          "https://filerget.com/api/products/meta/file-types",
+          {
+            signal: controller.signal,
+          }
+        );
+        const json = await res.json();
+        setFileTypes(json.data || []);
+      } catch (e) {
+        if ((e as any).name !== "AbortError") console.error(e);
+      }
+    })();
+
+    return () => controller.abort();
+  }, []);
+
   /* ---------- Build fetchProducts ---------- */
   const fetchProducts = useCallback(
     async (pageNumber = 1) => {
@@ -255,6 +286,10 @@ export default function ProductGrid() {
         if (appliedFilters.priceRange[1] < maxPrice)
           params.append("max_price", String(appliedFilters.priceRange[1]));
         if (pageNumber > 1) params.append("page", String(pageNumber));
+
+        if (appliedFilters.fileTypes?.length) {
+          params.append("file_types", appliedFilters.fileTypes.join(","));
+        }
 
         const url = `https://filerget.com/api/products${
           params.toString() ? `?${params.toString()}` : ""
@@ -378,6 +413,7 @@ export default function ProductGrid() {
     setAppliedFilters({
       categories: selectedCategories,
       priceRange: priceRange ?? [minPrice ?? 0, maxPrice ?? 0],
+      fileTypes: selectedFileTypes,
     });
     setPage(1);
   };
@@ -385,8 +421,13 @@ export default function ProductGrid() {
   const resetAll = () => {
     if (minPrice === null || maxPrice === null) return;
     setSelectedCategories([]);
+    setSelectedFileTypes([]);
     setPriceRange([minPrice, maxPrice]);
-    setAppliedFilters({ categories: [], priceRange: [minPrice, maxPrice] });
+    setAppliedFilters({
+      categories: [],
+      priceRange: [minPrice, maxPrice],
+      fileTypes: [],
+    });
     setSearchInput("");
     setSearchQuery("");
     setPage(1);
@@ -525,6 +566,28 @@ export default function ProductGrid() {
                   }
                 />
               )}
+            </div>
+
+            <Divider className="mb-4" />
+
+            {/* File Types */}
+            <div className="mb-4">
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <File className="w-4 h-4 text-primary" /> File Types
+              </h4>
+
+              <CheckboxGroup
+                value={selectedFileTypes}
+                onValueChange={(vals) => setSelectedFileTypes(vals as string[])}
+              >
+                <div className="flex flex-col gap-2">
+                  {fileTypes.map((ft) => (
+                    <Checkbox key={ft} value={ft}>
+                      {ft.toUpperCase()}
+                    </Checkbox>
+                  ))}
+                </div>
+              </CheckboxGroup>
             </div>
 
             <Button
