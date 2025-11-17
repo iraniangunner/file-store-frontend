@@ -532,9 +532,17 @@ export default function ProductGrid() {
 
               <CheckboxGroup
                 value={selectedCategories}
-                onValueChange={(vals) =>
-                  setSelectedCategories(vals as string[])
-                }
+                // onValueChange={(vals) =>
+                //   setSelectedCategories(vals as string[])
+                // }
+                onValueChange={(vals) => {
+                  setSelectedCategories(vals as string[]);
+                  setAppliedFilters((prev) => ({
+                    ...prev,
+                    categories: vals as string[],
+                  }));
+                  setPage(1);
+                }}
               >
                 <div className="max-h-80 overflow-auto pr-2">
                   {renderCategoryTree(
@@ -561,9 +569,20 @@ export default function ProductGrid() {
                   maxValue={maxPrice}
                   value={priceRange ?? [minPrice, maxPrice]}
                   step={1}
-                  onChange={(v) =>
-                    Array.isArray(v) && setPriceRange(v as [number, number])
-                  }
+                  // onChange={(v) =>
+                  //   Array.isArray(v) && setPriceRange(v as [number, number])
+                  // }
+                  onChange={(v) => {
+                    if (!Array.isArray(v)) return;
+                    setPriceRange(v as [number, number]);
+
+                    setAppliedFilters((prev) => ({
+                      ...prev,
+                      priceRange: v as [number, number],
+                    }));
+
+                    setPage(1);
+                  }}
                 />
               )}
             </div>
@@ -578,26 +597,37 @@ export default function ProductGrid() {
 
               <CheckboxGroup
                 value={selectedFileTypes}
-                onValueChange={(vals) => setSelectedFileTypes(vals as string[])}
+                // onValueChange={(vals) => setSelectedFileTypes(vals as string[])}
+                onValueChange={(vals) => {
+                  setSelectedFileTypes(vals as string[]);
+
+                  //  اعمال فوری فیلتر بدون دکمه Apply
+                  setAppliedFilters((prev) => ({
+                    ...prev,
+                    fileTypes: vals as string[],
+                  }));
+
+                  setPage(1);
+                }}
               >
                 <div className="flex flex-col gap-2">
-                  {fileTypes.map((ft) => (
-                    <Checkbox key={ft} value={ft}>
-                      {ft.toUpperCase()}
+                  {fileTypes.map((ft: any) => (
+                    <Checkbox key={ft.type} value={ft.type}>
+                      {ft.type.toUpperCase()}
                     </Checkbox>
                   ))}
                 </div>
               </CheckboxGroup>
             </div>
 
-            <Button
+            {/* <Button
               className="w-full mt-2  bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold"
               size="lg"
               onPress={applyFilters}
               startContent={<Filter className="w-4 h-4" />}
             >
               Apply Filters
-            </Button>
+            </Button> */}
           </Card>
         </aside>
 
