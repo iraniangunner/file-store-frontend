@@ -87,27 +87,30 @@ const CategoryNode = ({
           </button>
         )}
 
-        {node.parent_id === null ? (
-          <span className="font-semibold">{node.name}</span>
-        ) : (
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              value={node.id}
-              checked={form.category_ids.includes(String(node.id))}
-              onChange={(e) => {
-                const id = String(node.id);
-                setForm((p: any) => {
-                  const updated = e.target.checked
-                    ? [...p.category_ids, id]
-                    : p.category_ids.filter((x: string) => x !== id);
-                  return { ...p, category_ids: updated };
-                });
-              }}
-            />
-            {node.name}
-          </label>
-        )}
+        {node.parent_id === null || node.children.length > 0 ? (
+  <span className={node.parent_id === null ? "font-semibold" : "ml-1"}>
+    {node.name}
+  </span>
+) : (
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      value={node.id}
+      checked={form.category_ids.includes(String(node.id))}
+      onChange={(e) => {
+        const id = String(node.id);
+        setForm((p: any) => {
+          const updated = e.target.checked
+            ? [...p.category_ids, id]
+            : p.category_ids.filter((x: string) => x !== id);
+          return { ...p, category_ids: updated };
+        });
+      }}
+    />
+    {node.name}
+  </label>
+)}
+
       </div>
 
       {hasChildren && isExpanded && (
