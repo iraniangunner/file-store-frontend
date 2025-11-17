@@ -46,14 +46,9 @@ type ProductsResponse = {
 
 /* ---------- Helpers ---------- */
 const collectCategoryIds = (cats: CategoryApi[], selected: string[]) => {
-  // If a parent is selected, include all descendants' ids as strings
-  const map = new Set<string>();
-  const visit = (node: CategoryApi) => {
-    map.add(String(node.id));
-    (node.children_recursive || []).forEach(visit);
-  };
-
+  const ids = new Set<string>();
   const rootById: Record<number, CategoryApi> = {};
+
   const index = (nodes: CategoryApi[]) => {
     for (const n of nodes) {
       rootById[n.id] = n;
@@ -64,11 +59,25 @@ const collectCategoryIds = (cats: CategoryApi[], selected: string[]) => {
 
   for (const s of selected) {
     const id = Number(s);
-    if (rootById[id]) visit(rootById[id]);
-    else map.add(s);
+    const node = rootById[id];
+    if (node) {
+      // اگر parent انتخاب شده است، فقط ID های childها را اضافه کن، خود parent نه
+      if (node.children_recursive?.length) {
+        const visitChildren = (n: CategoryApi) => {
+          (n.children_recursive || []).forEach((c) => {
+            ids.add(String(c.id));
+            visitChildren(c);
+          });
+        };
+        visitChildren(node);
+      } else {
+        // اگر node child هست، خودش اضافه شود
+        ids.add(s);
+      }
+    }
   }
 
-  return Array.from(map);
+  return Array.from(ids);
 };
 
 const findCategoryName = (cats: CategoryApi[], id: number): string | null => {
@@ -80,6 +89,64 @@ const findCategoryName = (cats: CategoryApi[], id: number): string | null => {
     }
   }
   return null;
+};
+
+// پیدا کردن والد‌ها (بازگشتی)
+const findParents = (
+  cats: CategoryApi[],
+  id: number,
+  parents: number[] = []
+): any => {
+  for (const c of cats) {
+    if (c.id === id) return parents;
+    if (c.children_recursive?.length) {
+      const res = findParents(c.children_recursive, id, [...parents, c.id]);
+      if (res) return res;
+    }
+  }
+  return null;
+};
+
+// پیدا کردن تمام چیلدها (بازگشتی)
+const findChildren = (node: CategoryApi) => {
+  let ids: number[] = [];
+  if (node.children_recursive?.length) {
+    for (const child of node.children_recursive) {
+      ids.push(child.id);
+      ids = ids.concat(findChildren(child));
+    }
+  }
+  return ids;
+};
+
+// پیدا کردن یک دسته با id
+const findCat = (cats: CategoryApi[], id: number): CategoryApi | null => {
+  for (const c of cats) {
+    if (c.id === id) return c;
+    if (c.children_recursive) {
+      const f = findCat(c.children_recursive, id);
+      if (f) return f;
+    }
+  }
+  return null;
+};
+
+const removeParentsOf = (categories: CategoryApi[], id: number): string[] => {
+  const parents: string[] = [];
+
+  const walk = (nodes: CategoryApi[], parent: CategoryApi | null) => {
+    for (const n of nodes) {
+      if (n.id === id && parent) {
+        parents.push(String(parent.id));
+      }
+      if (n.children_recursive) {
+        walk(n.children_recursive, n);
+      }
+    }
+  };
+
+  walk(categories, null);
+  return parents;
 };
 
 /* ---------- Main Component ---------- */
@@ -409,14 +476,6 @@ export default function ProductGrid() {
   };
 
   /* ---------- UI actions ---------- */
-  const applyFilters = () => {
-    setAppliedFilters({
-      categories: selectedCategories,
-      priceRange: priceRange ?? [minPrice ?? 0, maxPrice ?? 0],
-      fileTypes: selectedFileTypes,
-    });
-    setPage(1);
-  };
 
   const resetAll = () => {
     if (minPrice === null || maxPrice === null) return;
@@ -532,15 +591,45 @@ export default function ProductGrid() {
 
               <CheckboxGroup
                 value={selectedCategories}
-                // onValueChange={(vals) =>
-                //   setSelectedCategories(vals as string[])
-                // }
                 onValueChange={(vals) => {
-                  setSelectedCategories(vals as string[]);
+                  let newSelected = vals as string[];
+
+                  categories.forEach((parent) => {
+                    if (!parent.children_recursive?.length) return;
+
+                    const parentId = String(parent.id);
+                    const childIds = parent.children_recursive.map((c) =>
+                      String(c.id)
+                    );
+
+                    // آیا کاربر روی parent کلیک کرده؟
+                    const parentClicked =
+                      !selectedCategories.includes(parentId) &&
+                      newSelected.includes(parentId);
+
+                    if (parentClicked) {
+                      // 1️⃣ حذف child هایی که قبلاً checked بودند
+                      newSelected = newSelected.filter(
+                        (id) => !childIds.includes(id)
+                      );
+                    }
+
+                    // 2️⃣ اگر child checked شده → parent unchecked
+                    const anyChildCheckedNow = childIds.some((id) =>
+                      newSelected.includes(id)
+                    );
+                    if (anyChildCheckedNow && newSelected.includes(parentId)) {
+                      newSelected = newSelected.filter((id) => id !== parentId);
+                    }
+                  });
+
+                  setSelectedCategories(newSelected);
+
                   setAppliedFilters((prev) => ({
                     ...prev,
-                    categories: vals as string[],
+                    categories: collectCategoryIds(categories, newSelected),
                   }));
+
                   setPage(1);
                 }}
               >
@@ -619,15 +708,6 @@ export default function ProductGrid() {
                 </div>
               </CheckboxGroup>
             </div>
-
-            {/* <Button
-              className="w-full mt-2  bg-gradient-to-r from-[#3B9FE8] to-[#3D3D8F] text-white font-semibold"
-              size="lg"
-              onPress={applyFilters}
-              startContent={<Filter className="w-4 h-4" />}
-            >
-              Apply Filters
-            </Button> */}
           </Card>
         </aside>
 
