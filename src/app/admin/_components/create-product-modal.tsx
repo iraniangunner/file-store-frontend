@@ -64,27 +64,26 @@ const CategoryNode = ({
   setExpanded: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
 }) => {
   const hasChildren = node.children.length > 0;
-  const isExpanded = expanded[node.id] ?? true; // Default OPEN
+  const isExpanded = expanded[node.id] ?? true;
 
   return (
     <div className="ml-2 my-1">
       <div className="flex items-center gap-2">
-        {/* Toggle parent */}
+
+        {/* toggle */}
         {hasChildren && (
           <button
             className="w-5 text-gray-600"
             onClick={() =>
-              setExpanded((prev) => ({ ...prev, [node.id]: !isExpanded }))
+              setExpanded(prev => ({ ...prev, [node.id]: !isExpanded }))
             }
           >
             {isExpanded ? "▾" : "▸"}
           </button>
         )}
 
-        {/* Parent = no checkbox | Child = checkbox */}
-        {node.parent_id === null ? (
-          <span className="font-semibold">{node.name}</span>
-        ) : (
+        {/* ONLY LEAFS HAVE CHECKBOX */}
+        {!hasChildren ? (
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -96,17 +95,20 @@ const CategoryNode = ({
                   const updated = e.target.checked
                     ? [...p.category_ids, id]
                     : p.category_ids.filter((x: string) => x !== id);
-
                   return { ...p, category_ids: updated };
                 });
               }}
             />
             {node.name}
           </label>
+        ) : (
+          <span className={node.parent_id === null ? "font-semibold" : ""}>
+            {node.name}
+          </span>
         )}
       </div>
 
-      {/* Render children */}
+      {/* children */}
       {hasChildren && isExpanded && (
         <div className="ml-4 border-l pl-3">
           {node.children.map((child) => (
@@ -124,6 +126,7 @@ const CategoryNode = ({
     </div>
   );
 };
+
 
 // =======================
 // MAIN COMPONENT
