@@ -131,74 +131,23 @@ const findCat = (cats: CategoryApi[], id: number): CategoryApi | null => {
   return null;
 };
 
-const removeParentsOf = (categories: CategoryApi[], id: number): string[] => {
-  const parents: string[] = [];
-
-  const walk = (nodes: CategoryApi[], parent: CategoryApi | null) => {
-    for (const n of nodes) {
-      if (n.id === id && parent) {
-        parents.push(String(parent.id));
-      }
-      if (n.children_recursive) {
-        walk(n.children_recursive, n);
-      }
-    }
-  };
-
-  walk(categories, null);
-  return parents;
-};
-
 /* ---------- Main Component ---------- */
 export default function ProductGrid() {
   // --- initial URL parse & flags ---
   const [initialLoaded, setInitialLoaded] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const cats = params.get("category_ids")
-      ? params.get("category_ids")!.split(",")
-      : [];
-    const search = params.get("search") || "";
-    const page = Number(params.get("page")) || 1;
-    const min = params.get("min_price");
-    const max = params.get("max_price");
-    const fileTypes = params.get("file_types")
-      ? params.get("file_types")!.split(",")
-      : [];
 
-    setSelectedCategories(cats);
-    setSearchInput(search);
-    setSearchQuery(search);
-    setPage(page);
+  
 
-    const pr =
-      min !== null && max !== null
-        ? ([Number(min), Number(max)] as [number, number])
-        : null;
-    setPriceRange(pr);
+  /* ---------- State ---------- */
 
-    setSelectedFileTypes(fileTypes);
 
-    setAppliedFilters({
-      categories: cats,
-      priceRange: pr ?? [0, 0],
-      fileTypes: fileTypes,
-    });
-
-    setInitialLoaded(true);
-  }, []);
-
-  // --- data states ---
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // file-types
   const [fileTypes, setFileTypes] = useState<string[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
 
-  // --- search & debounce ---
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const searchDebouncedRef = useRef(
@@ -211,32 +160,71 @@ export default function ProductGrid() {
     return () => searchDebouncedRef.current.cancel();
   }, []);
 
-  // --- pagination ---
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // --- categories (tree) ---
   const [categories, setCategories] = useState<CategoryApi[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<
     Record<number, boolean>
   >({});
 
-  // --- price range ---
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
 
-  // --- applied filters (committed) ---
   const [appliedFilters, setAppliedFilters] = useState({
     categories: [] as string[],
     priceRange: [0, 0] as [number, number],
     fileTypes: [] as string[],
   });
 
-  // --- UI state ---
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  // const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // 1️⃣ initial load from URL
+// ---------- 1️⃣ initial URL parse ----------
+useEffect(() => {
+  if (initialLoaded || typeof window === "undefined") return;
+
+  const params = new URLSearchParams(window.location.search);
+  const cats = params.get("category_ids")?.split(",") || [];
+  const files = params.get("file_types")?.split(",") || [];
+  const search = params.get("search") || "";
+  const pageNum = Number(params.get("page")) || 1;
+
+  setSelectedCategories(cats);
+  setSelectedFileTypes(files);
+  setSearchInput(search);
+  setSearchQuery(search);
+  setPage(pageNum);
+
+  // فقط مقدار URL را بخوانید؛ اگر min/max موجود نیست، بعداً fallback API جایگزین می‌کند
+  const min = params.get("min_price");
+  const max = params.get("max_price");
+  const pr: [number, number] | null =
+    min !== null && max !== null ? [Number(min), Number(max)] : null;
+
+  if (pr) setPriceRange(pr);
+
+  setAppliedFilters((prev) => ({
+    ...prev,
+    categories: cats,
+    fileTypes: files,
+    priceRange: pr ?? prev.priceRange, // اگر URL نداشت، prev (fallback API) بماند
+  }));
+
+  setInitialLoaded(true);
+}, [initialLoaded]);
+
+// ---------- 2️⃣ auto fetch on filters change ----------
+useEffect(() => {
+  if (!initialLoaded) return;           // منتظر parse URL
+  if (!categories.length) return;       // منتظر fetch categories
+  if (priceRange === null) return;      // منتظر priceRange (URL یا API)
+
+  fetchProducts(page);
+}, [appliedFilters, searchQuery, page, initialLoaded, categories, priceRange]);
+
 
   /* ---------- Fetch categories ---------- */
   useEffect(() => {
@@ -394,14 +382,7 @@ export default function ProductGrid() {
     [appliedFilters, searchQuery, minPrice, maxPrice, categories]
   );
 
-  /* ---------- auto fetch on filters change ---------- */
-  useEffect(() => {
-    if (!initialLoaded) return;
-    // avoid calling before price range or categories ready
-    if (priceRange === null || minPrice === null || maxPrice === null) return;
-    fetchProducts(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, searchQuery, page, initialLoaded]);
+  
 
   /* ---------- Category Tree rendering ---------- */
   const toggleExpanded = (id: number) => {
@@ -658,9 +639,6 @@ export default function ProductGrid() {
                   maxValue={maxPrice}
                   value={priceRange ?? [minPrice, maxPrice]}
                   step={1}
-                  // onChange={(v) =>
-                  //   Array.isArray(v) && setPriceRange(v as [number, number])
-                  // }
                   onChange={(v) => {
                     if (!Array.isArray(v)) return;
                     setPriceRange(v as [number, number]);
