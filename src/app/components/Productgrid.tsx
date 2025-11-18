@@ -131,15 +131,23 @@ const findCat = (cats: CategoryApi[], id: number): CategoryApi | null => {
   return null;
 };
 
+const getAllDescendants = (node: CategoryApi): CategoryApi[] => {
+  let result: CategoryApi[] = [];
+  if (node.children_recursive) {
+    node.children_recursive.forEach((child) => {
+      result.push(child);
+      result = result.concat(getAllDescendants(child));
+    });
+  }
+  return result;
+};
+
 /* ---------- Main Component ---------- */
 export default function ProductGrid() {
   // --- initial URL parse & flags ---
   const [initialLoaded, setInitialLoaded] = useState(false);
 
-  
-
   /* ---------- State ---------- */
-
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,52 +190,86 @@ export default function ProductGrid() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // 1️⃣ initial load from URL
-// ---------- 1️⃣ initial URL parse ----------
-useEffect(() => {
-  if (initialLoaded || typeof window === "undefined") return;
+  // ---------- 1️⃣ initial URL parse ----------
+  useEffect(() => {
+    if (initialLoaded || typeof window === "undefined") return;
+    if (minPrice === null || maxPrice === null || !categories.length) return;
 
-  // منتظر باش تا minPrice و maxPrice از API برسند
-  if (minPrice === null || maxPrice === null) return;
+    const params = new URLSearchParams(window.location.search);
+    const childIdsFromUrl = params.get("category_ids")?.split(",") || [];
+    const files = params.get("file_types")?.split(",") || [];
+    const search = params.get("search") || "";
+    const pageNum = Number(params.get("page")) || 1;
 
-  const params = new URLSearchParams(window.location.search);
-  const cats = params.get("category_ids")?.split(",") || [];
-  const files = params.get("file_types")?.split(",") || [];
-  const search = params.get("search") || "";
-  const pageNum = Number(params.get("page")) || 1;
+    const selected: string[] = [];
 
-  setSelectedCategories(cats);
-  setSelectedFileTypes(files);
-  setSearchInput(search);
-  setSearchQuery(search);
-  setPage(pageNum);
+    // بررسی parent ها
+    categories.forEach((parent) => {
+      if (!parent.children_recursive?.length) return;
+      const childIds = parent.children_recursive.map((c) => String(c.id));
 
-  // اگر مقدار min یا max در URL هست استفاده کن، در غیر این صورت fallback API
-  const min = params.get("min_price") ? Number(params.get("min_price")) : minPrice;
-  const max = params.get("max_price") ? Number(params.get("max_price")) : maxPrice;
+      // ⚡ فقط اگر parent خودش در selectedCategories قبلی یا UI بود، checked بشه
+      const allChildrenSelected = childIds.every((id) =>
+        childIdsFromUrl.includes(id)
+      );
 
-  const pr: [number, number] = [min, max];
+      if (allChildrenSelected) {
+        // Parent checked، child ها هم میتونن checked بمونن
+        selected.push(String(parent.id));
+        // ⚠️ child ها رو اضافه نکنید تا unchecked بمونن
+      } else {
+        // فقط child های URL اضافه میشن
+        selected.push(...childIdsFromUrl.filter((id) => childIds.includes(id)));
+      }
+    });
 
-  setPriceRange(pr);
+    // همچنین child های standalone (بدون parent) اضافه شوند
+    const rootChilds = childIdsFromUrl.filter((id) => {
+      return !categories.some((parent) =>
+        parent.children_recursive?.some((c) => String(c.id) === id)
+      );
+    });
+    selected.push(...rootChilds);
 
-  setAppliedFilters((prev) => ({
-    ...prev,
-    categories: cats,
-    fileTypes: files,
-    priceRange: pr,
-  }));
+    setSelectedCategories(selected);
+    setSelectedFileTypes(files);
+    setSearchInput(search);
+    setSearchQuery(search);
+    setPage(pageNum);
 
-  setInitialLoaded(true);
-}, [initialLoaded, minPrice, maxPrice]);
+    const min = params.get("min_price")
+      ? Number(params.get("min_price"))
+      : minPrice;
+    const max = params.get("max_price")
+      ? Number(params.get("max_price"))
+      : maxPrice;
+    setPriceRange([min, max]);
 
-// ---------- 2️⃣ auto fetch on filters change ----------
-useEffect(() => {
-  if (!initialLoaded) return;           // منتظر parse URL
-  if (!categories.length) return;       // منتظر fetch categories
-  if (priceRange === null) return;      // منتظر priceRange (URL یا API)
+    setAppliedFilters((prev) => ({
+      ...prev,
+      categories: selected,
+      fileTypes: files,
+      priceRange: [min, max],
+    }));
 
-  fetchProducts(page);
-}, [appliedFilters, searchQuery, page, initialLoaded, categories, priceRange]);
+    setInitialLoaded(true);
+  }, [initialLoaded, minPrice, maxPrice, categories]);
 
+  // ---------- 2️⃣ auto fetch on filters change ----------
+  useEffect(() => {
+    if (!initialLoaded) return; // منتظر parse URL
+    if (!categories.length) return; // منتظر fetch categories
+    if (priceRange === null) return; // منتظر priceRange (URL یا API)
+
+    fetchProducts(page);
+  }, [
+    appliedFilters,
+    searchQuery,
+    page,
+    initialLoaded,
+    categories,
+    priceRange,
+  ]);
 
   /* ---------- Fetch categories ---------- */
   useEffect(() => {
@@ -269,7 +311,6 @@ useEffect(() => {
 
   /* ---------- Fetch price range ---------- */
   useEffect(() => {
-
     const ctrl = new AbortController();
     (async () => {
       try {
@@ -385,8 +426,6 @@ useEffect(() => {
     },
     [appliedFilters, searchQuery, minPrice, maxPrice, categories]
   );
-
-  
 
   /* ---------- Category Tree rendering ---------- */
   const toggleExpanded = (id: number) => {
@@ -668,7 +707,6 @@ useEffect(() => {
 
               <CheckboxGroup
                 value={selectedFileTypes}
-                // onValueChange={(vals) => setSelectedFileTypes(vals as string[])}
                 onValueChange={(vals) => {
                   setSelectedFileTypes(vals as string[]);
 
@@ -706,7 +744,7 @@ useEffect(() => {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               {searchQuery && (
                 <Chip
                   onClose={() => {
@@ -717,11 +755,18 @@ useEffect(() => {
                   Search: {searchQuery}
                 </Chip>
               )}
-              {appliedFilters.categories.map((c) => (
-                <Chip key={c} onClose={() => clearCategoryChip(c)}>
-                  {getCatName(c)}
-                </Chip>
-              ))}
+                 {appliedFilters.categories.map((id) => {
+    const node = findCat(categories, Number(id));
+    if (!node) return null;
+
+    return (
+      <Chip key={id} onClose={() => clearCategoryChip(id)}>
+        {node.name}
+      </Chip>
+    );
+  })}
+
+    
               <Button
                 size="sm"
                 variant="light"
@@ -730,7 +775,7 @@ useEffect(() => {
               >
                 Clear
               </Button>
-            </div>
+            </div> */}
           </div>
 
           {/* Products area */}
