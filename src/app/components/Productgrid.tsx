@@ -186,6 +186,9 @@ export default function ProductGrid() {
 useEffect(() => {
   if (initialLoaded || typeof window === "undefined") return;
 
+  // منتظر باش تا minPrice و maxPrice از API برسند
+  if (minPrice === null || maxPrice === null) return;
+
   const params = new URLSearchParams(window.location.search);
   const cats = params.get("category_ids")?.split(",") || [];
   const files = params.get("file_types")?.split(",") || [];
@@ -198,23 +201,23 @@ useEffect(() => {
   setSearchQuery(search);
   setPage(pageNum);
 
-  // فقط مقدار URL را بخوانید؛ اگر min/max موجود نیست، بعداً fallback API جایگزین می‌کند
-  const min = params.get("min_price");
-  const max = params.get("max_price");
-  const pr: [number, number] | null =
-    min !== null && max !== null ? [Number(min), Number(max)] : null;
+  // اگر مقدار min یا max در URL هست استفاده کن، در غیر این صورت fallback API
+  const min = params.get("min_price") ? Number(params.get("min_price")) : minPrice;
+  const max = params.get("max_price") ? Number(params.get("max_price")) : maxPrice;
 
-  if (pr) setPriceRange(pr);
+  const pr: [number, number] = [min, max];
+
+  setPriceRange(pr);
 
   setAppliedFilters((prev) => ({
     ...prev,
     categories: cats,
     fileTypes: files,
-    priceRange: pr ?? prev.priceRange, // اگر URL نداشت، prev (fallback API) بماند
+    priceRange: pr,
   }));
 
   setInitialLoaded(true);
-}, [initialLoaded]);
+}, [initialLoaded, minPrice, maxPrice]);
 
 // ---------- 2️⃣ auto fetch on filters change ----------
 useEffect(() => {
@@ -266,6 +269,7 @@ useEffect(() => {
 
   /* ---------- Fetch price range ---------- */
   useEffect(() => {
+
     const ctrl = new AbortController();
     (async () => {
       try {
