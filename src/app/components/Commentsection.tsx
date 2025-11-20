@@ -30,7 +30,7 @@ interface CommentsSectionProps {
   productSlug: string;
 }
 
-export function CommentsSection({ productSlug }: CommentsSectionProps) {
+export default function CommentsSection({ productSlug }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");

@@ -88,29 +88,28 @@ const CategoryNode = ({
         )}
 
         {node.parent_id === null || node.children.length > 0 ? (
-  <span className={node.parent_id === null ? "font-semibold" : "ml-1"}>
-    {node.name}
-  </span>
-) : (
-  <label className="flex items-center gap-2">
-    <input
-      type="checkbox"
-      value={node.id}
-      checked={form.category_ids.includes(String(node.id))}
-      onChange={(e) => {
-        const id = String(node.id);
-        setForm((p: any) => {
-          const updated = e.target.checked
-            ? [...p.category_ids, id]
-            : p.category_ids.filter((x: string) => x !== id);
-          return { ...p, category_ids: updated };
-        });
-      }}
-    />
-    {node.name}
-  </label>
-)}
-
+          <span className={node.parent_id === null ? "font-semibold" : "ml-1"}>
+            {node.name}
+          </span>
+        ) : (
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              value={node.id}
+              checked={form.category_ids.includes(String(node.id))}
+              onChange={(e) => {
+                const id = String(node.id);
+                setForm((p: any) => {
+                  const updated = e.target.checked
+                    ? [...p.category_ids, id]
+                    : p.category_ids.filter((x: string) => x !== id);
+                  return { ...p, category_ids: updated };
+                });
+              }}
+            />
+            {node.name}
+          </label>
+        )}
       </div>
 
       {hasChildren && isExpanded && (
@@ -184,8 +183,15 @@ export function EditProductModal({
 
   const handleSubmit = async () => {
     if (!product) return;
-    if (!form.title || !form.description || !form.price || form.category_ids.length === 0) {
-      alert("Please fill in all required fields and select at least one category.");
+    if (
+      !form.title ||
+      !form.description ||
+      !form.price ||
+      form.category_ids.length === 0
+    ) {
+      alert(
+        "Please fill in all required fields and select at least one category."
+      );
       return;
     }
 
@@ -222,7 +228,9 @@ export function EditProductModal({
 
     setIsSubmitting(true);
     try {
-      await api.delete(`/products/${product.slug}/image`, { requiresAuth: true } as any);
+      await api.delete(`/products/${product.slug}/image`, {
+        requiresAuth: true,
+      } as any);
       alert("Image deleted successfully.");
       onProductUpdated?.();
       onClose();
@@ -277,7 +285,9 @@ export function EditProductModal({
           <Textarea
             label="Description"
             value={form.description}
-            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, description: e.target.value }))
+            }
           />
           <Input
             label="Price ($)"
@@ -342,7 +352,9 @@ export function EditProductModal({
                 </Button>
               </div>
             ) : (
-              <p className="text-xs text-gray-400 mt-1">No image uploaded yet.</p>
+              <p className="text-xs text-gray-400 mt-1">
+                No image uploaded yet.
+              </p>
             )}
           </div>
 
@@ -397,4 +409,3 @@ export function EditProductModal({
     </Modal>
   );
 }
-
