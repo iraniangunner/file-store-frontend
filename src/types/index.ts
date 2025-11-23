@@ -48,3 +48,18 @@ export interface Comment {
     name: string
   }
 }
+
+
+
+export type CategoryApi = {
+  id: number;
+  name: string;
+  parent_id?: number | null;
+  children_recursive?: CategoryApi[];
+};
+
+export type ProductsResponse = {
+  data: Product[];
+  current_page: number;
+  last_page: number;
+};
