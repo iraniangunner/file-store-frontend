@@ -18,6 +18,10 @@ const CommentsSection = dynamic(() => import("./Commentsection"), {
   ssr: false,
 });
 
+const SimilarProductsSlider = dynamic(() => import("./Similarproducts"), {
+  ssr: false,
+});
+
 // Helper function to format file size
 function formatFileSize(bytes: string | number): string {
   const size = Number(bytes);
@@ -35,6 +39,7 @@ function getFileTypeLabel(mime: string): string {
     "application/epub+zip": "EPUB",
     "application/zip": "ZIP",
     "application/x-zip-compressed": "ZIP",
+    // "application/x-compressed": "ZIP",
     "image/jpeg": "JPEG",
     "image/png": "PNG",
     "video/mp4": "MP4",
@@ -117,6 +122,7 @@ export function ProductDetail({ product }: { product: any }) {
                 </span>
               )}
             </div>
+            {/*Product Rating*/}
 
             {/* Description */}
             <div>
@@ -156,6 +162,8 @@ export function ProductDetail({ product }: { product: any }) {
             </div>
           </div>
         </div>
+
+        <SimilarProductsSlider productSlug={product.slug} />
 
         {/* Comments */}
         <div className="mt-12">

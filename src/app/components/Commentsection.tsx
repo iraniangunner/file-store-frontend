@@ -13,6 +13,7 @@ import {
 import { MessageSquare, Send, Trash2, Reply } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
+import { ProductRating } from "./Productrating";
 
 export interface Comment {
   id: number;
