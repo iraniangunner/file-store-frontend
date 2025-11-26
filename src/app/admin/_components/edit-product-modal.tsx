@@ -110,6 +110,24 @@ const CategoryNode = ({
             {node.name}
           </label>
         )}
+
+        {/* <label className="flex items-center gap-2">
+  <input
+    type="checkbox"
+    value={node.id}
+    checked={form.category_ids.includes(String(node.id))}
+    onChange={(e) => {
+      const id = String(node.id);
+      setForm((p: any) => {
+        const updated = e.target.checked
+          ? [...p.category_ids, id]
+          : p.category_ids.filter((x: string) => x !== id);
+        return { ...p, category_ids: updated };
+      });
+    }}
+  />
+  {node.name}
+        </label> */}
       </div>
 
       {hasChildren && isExpanded && (
