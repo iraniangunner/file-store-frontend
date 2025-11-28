@@ -2,10 +2,10 @@ import { Card, Button } from "@heroui/react";
 import { Package, RotateCcw } from "lucide-react";
 
 interface EmptyStateProps {
-  onReset: () => void;
+  // onReset: () => void;
 }
 
-export function EmptyState({ onReset }: EmptyStateProps) {
+export default function EmptyState() {
   return (
     <Card className="p-12 text-center rounded-2xl border-2 border-dashed border-divider">
       <div className="space-y-4">
@@ -17,12 +17,12 @@ export function EmptyState({ onReset }: EmptyStateProps) {
           <p className="text-default-500 mb-4">
             Try adjusting your filters or search query
           </p>
-          <Button
+          {/* <Button
             onPress={onReset}
             startContent={<RotateCcw className="w-4 h-4" />}
           >
             Reset filters
-          </Button>
+          </Button> */}
         </div>
       </div>
     </Card>
