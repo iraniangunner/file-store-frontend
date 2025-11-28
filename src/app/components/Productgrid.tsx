@@ -821,6 +821,7 @@ import { ProductCard } from "./Productcard";
 // import { PaginationWrapper } from "./Paginationwrapper";
 import { CategoryApi } from "@/types";
 import dynamic from "next/dynamic";
+import FilterSidebar from "./Filtersidebar";
 
 interface ProductGridProps {
   initialProducts: Product[];
@@ -839,7 +840,7 @@ interface ProductGridProps {
   };
 }
 
-const FilterSidebar = dynamic(() => import("./Filtersidebar"), { ssr: false });
+// const FilterSidebar = dynamic(() => import("./Filtersidebar"), { ssr: false });
 const ProductsHeader = dynamic(() => import("./Productsheader"), { ssr: false });
 const PaginationWrapper = dynamic(() => import("./Paginationwrapper"), { ssr: false });
 const SearchBar = dynamic(() => import("./Searchbar"), { ssr: false });
