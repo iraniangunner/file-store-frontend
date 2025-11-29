@@ -9,7 +9,6 @@ import {
 } from "@heroui/react";
 import Link from "next/link";
 
-
 // export function ProductCard({ product, view }: any) {
 //   const isFree = product.price == 0;
 
@@ -19,12 +18,12 @@ import Link from "next/link";
 //     <Card
 //       key={product.id}
 //       shadow="sm"
-//       className={`group rounded-2xl transition-all duration-300 hover:shadow-2xl border border-divider overflow-hidden 
+//       className={`group rounded-2xl transition-all duration-300 hover:shadow-2xl border border-divider overflow-hidden
 //         ${isList ? "flex flex-row h-[200px]" : ""}`}
 //     >
 //       {/* IMAGE SECTION */}
 //       <CardHeader
-//         className={`p-0 relative overflow-hidden 
+//         className={`p-0 relative overflow-hidden
 //           ${isList ? "w-1/3 h-full" : ""}`}
 //       >
 //         <div className={`relative w-full ${isList ? "h-full" : "h-[240px]"} overflow-hidden`}>
@@ -35,7 +34,7 @@ import Link from "next/link";
 //                 ? `https://filerget.com${product.image_url}`
 //                 : "/images/folder.png"
 //             }
-//             className={`w-full h-full object-cover transition-transform duration-500 
+//             className={`w-full h-full object-cover transition-transform duration-500
 //               group-hover:scale-110`}
 //             removeWrapper
 //           />
@@ -66,7 +65,7 @@ import Link from "next/link";
 
 //         {/* FOOTER */}
 //         <CardFooter
-//           className={`flex items-center justify-between px-5 pb-5 pt-0 gap-2 
+//           className={`flex items-center justify-between px-5 pb-5 pt-0 gap-2
 //             ${isList ? "" : ""}`}
 //         >
 //           <div className="flex flex-col">
@@ -95,8 +94,6 @@ export function ProductCard({ product, view }: any) {
   const isFree = product.price == 0;
   const isList = view === "list";
 
-  
-
   return (
     <div
       key={product.id}
@@ -109,7 +106,9 @@ export function ProductCard({ product, view }: any) {
           ${isList ? "w-1/3 h-full" : ""}`}
       >
         <div
-          className={`relative w-full ${isList ? "h-full" : "h-[240px]"} overflow-hidden`}
+          className={`relative w-full ${
+            isList ? "h-full" : "h-[240px]"
+          } overflow-hidden`}
         >
           <img
             alt={product.title}
@@ -123,9 +122,7 @@ export function ProductCard({ product, view }: any) {
           />
 
           {isFree && (
-            <span
-              className="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-md shadow font-semibold"
-            >
+            <span className="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-md shadow font-semibold">
               Free
             </span>
           )}
@@ -166,4 +163,3 @@ export function ProductCard({ product, view }: any) {
     </div>
   );
 }
-

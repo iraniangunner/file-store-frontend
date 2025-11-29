@@ -214,10 +214,52 @@ export default function FilterSidebar({
     }
   };
 
+  // Custom Checkbox Component to ensure consistency
+  const CustomCheckbox = ({
+    checked,
+    onChange,
+    label,
+  }: {
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    label: string;
+  }) => (
+    <label className="flex items-center gap-2.5 cursor-pointer flex-1 group min-w-0">
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`w-4 h-4 border-2 rounded flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+          checked
+            ? "bg-blue-600 border-blue-600"
+            : "border-gray-300 bg-white group-hover:border-blue-400"
+        }`}
+      >
+        {checked && (
+          <svg
+            className="w-3 h-3 text-white"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.5"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path d="M5 13l4 4L19 7"></path>
+          </svg>
+        )}
+      </button>
+      <span className="text-sm text-gray-700 select-none group-hover:text-gray-900 truncate">
+        {label}
+      </span>
+    </label>
+  );
+
   const renderCategoryTree = (
     node: CategoryApi,
     isExpandedMap: Record<number, boolean>,
-    toggleExpanded: (id: number) => void,
+    toggleExpandedFn: (id: number) => void,
     level = 0
   ): React.ReactNode => {
     const hasChildren = (node.children_recursive || []).length > 0;
@@ -231,7 +273,7 @@ export default function FilterSidebar({
         <div
           className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
           style={{ paddingLeft: `${level * 8}px` }}
-          onClick={() => hasChildren && toggleExpanded(node.id)}
+          onClick={() => hasChildren && toggleExpandedFn(node.id)}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {isRoot ? (
@@ -239,39 +281,13 @@ export default function FilterSidebar({
                 {node.name}
               </span>
             ) : (
-              <label
-                className="flex items-center gap-2.5 cursor-pointer flex-1 group min-w-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="relative flex items-center justify-center flex-shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={(e) =>
-                      handleCategoryChange(nodeId, e.target.checked)
-                    }
-                    className="peer sr-only"
-                  />
-                  <div className="w-4 h-4 border-2 border-gray-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all duration-200 flex items-center justify-center group-hover:border-blue-400">
-                    {isChecked && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2.5"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path d="M5 13l4 4L19 7"></path>
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span className="text-sm text-gray-700 select-none group-hover:text-gray-900 truncate">
-                  {node.name}
-                </span>
-              </label>
+              <div onClick={(e) => e.stopPropagation()} className="flex-1 min-w-0">
+                <CustomCheckbox
+                  checked={isChecked}
+                  onChange={(checked) => handleCategoryChange(nodeId, checked)}
+                  label={node.name}
+                />
+              </div>
             )}
           </div>
 
@@ -303,7 +319,7 @@ export default function FilterSidebar({
                   renderCategoryTree(
                     child,
                     isExpandedMap,
-                    toggleExpanded,
+                    toggleExpandedFn,
                     level + 1
                   )
                 )}
@@ -318,9 +334,9 @@ export default function FilterSidebar({
   const rootCategories = categories.filter((c) => c.parent_id === null);
 
   // Calculate active filter count
-  const activeFilterCount = 
-    selectedCategories.length + 
-    selectedFileTypes.length + 
+  const activeFilterCount =
+    selectedCategories.length +
+    selectedFileTypes.length +
     (priceRangeValue[0] !== minPrice || priceRangeValue[1] !== maxPrice ? 1 : 0);
 
   const pricePercentMin =
@@ -411,22 +427,25 @@ export default function FilterSidebar({
           File Types
         </h4>
         <div className="space-y-2.5">
-          {fileTypes.map((type: any) => (
-            <label
-              key={type.type}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <div className="relative flex items-center justify-center flex-shrink-0">
-                <input
-                  type="checkbox"
-                  checked={selectedFileTypes.includes(type.type)}
-                  onChange={(e) =>
-                    handleFileTypeChange(type.type, e.target.checked)
-                  }
-                  className="peer sr-only"
-                />
-                <div className="w-4 h-4 border-2 border-gray-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all duration-200 flex items-center justify-center group-hover:border-blue-400">
-                  {selectedFileTypes.includes(type.type) && (
+          {fileTypes.map((type: any) => {
+            const isFileTypeChecked = selectedFileTypes.includes(type.type);
+            return (
+              <label
+                key={type.type}
+                className="flex items-center gap-2.5 cursor-pointer group"
+              >
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={isFileTypeChecked}
+                  onClick={() => handleFileTypeChange(type.type, !isFileTypeChecked)}
+                  className={`w-4 h-4 border-2 rounded flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+                    isFileTypeChecked
+                      ? "bg-blue-600 border-blue-600"
+                      : "border-gray-300 bg-white group-hover:border-blue-400"
+                  }`}
+                >
+                  {isFileTypeChecked && (
                     <svg
                       className="w-3 h-3 text-white"
                       fill="none"
@@ -439,13 +458,13 @@ export default function FilterSidebar({
                       <path d="M5 13l4 4L19 7"></path>
                     </svg>
                   )}
-                </div>
-              </div>
-              <span className="text-sm text-gray-700 select-none group-hover:text-gray-900">
-                {type.type.toUpperCase()}
-              </span>
-            </label>
-          ))}
+                </button>
+                <span className="text-sm text-gray-700 select-none group-hover:text-gray-900">
+                  {type.type.toUpperCase()}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
     </div>
