@@ -35,7 +35,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "auth/google/callback",
     "cart",
     "contact-us",
-    "products",
     "dashboard/orders",
     "forgot-password",
     "payment-cancel",
