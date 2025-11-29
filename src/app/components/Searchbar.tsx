@@ -1,35 +1,3 @@
-// import { Input, Button } from "@heroui/react";
-// import { Search, X } from "lucide-react";
-
-// interface SearchBarProps {
-//   value: string;
-//   onChange: (value: string) => void;
-//   onClear: () => void;
-// }
-
-// export function SearchBar({ value, onChange, onClear }: SearchBarProps) {
-//   return (
-//     <div className="flex-1 max-w-2xl">
-//       <Input
-//         placeholder="Search products..."
-//         value={value}
-//         onChange={(e) => onChange(e.currentTarget.value)}
-//         size="lg"
-//         startContent={<Search className="w-5 h-5" />}
-//         endContent={
-//           value && (
-//             <Button isIconOnly size="sm" variant="light" onPress={onClear}>
-//               <X className="w-4 h-4" />
-//             </Button>
-//           )
-//         }
-//         classNames={{ input: "text-base", inputWrapper: "shadow-sm" }}
-//       />
-//     </div>
-//   );
-// }
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -45,20 +13,18 @@ export default function SearchBar({ initialValue = "" }: SearchBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
   const [value, setValue] = useState(initialValue);
 
-  // Use useEffect to handle the debounced update with current searchParams
   useEffect(() => {
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
-      
+
       if (value) {
         params.set("search", value);
       } else {
         params.delete("search");
       }
-      
+
       // Only update if search value changed
       if (params.get("search") !== searchParams.get("search")) {
         params.delete("page"); // Reset to page 1

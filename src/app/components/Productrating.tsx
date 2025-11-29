@@ -23,7 +23,7 @@ export function ProductRating({ productSlug }: ProductRatingProps) {
   async function fetchRating() {
     try {
       const res = await api.get(`/products/${productSlug}/rating`);
-      setAverageRating(res.data.average_rating); // مثلا 4.3
+      setAverageRating(res.data.average_rating);
       setReviewsCount(res.data.reviews_count);
     } catch (err) {
       console.error("Failed to fetch rating", err);

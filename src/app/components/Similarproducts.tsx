@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ShoppingCart, Eye, Heart, Star } from "lucide-react";
-
-// Import Swiper styles
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -52,16 +50,18 @@ export default function SimilarProductsSlider({
           <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">
             You May Also Like
           </h3>
-          <p className="text-gray-500 text-sm">Discover similar products you'll love</p>
+          <p className="text-gray-500 text-sm">
+            Discover similar products you'll love
+          </p>
         </div>
         <div className="hidden md:flex gap-3">
-          <button 
+          <button
             className="swiper-button-prev-custom group w-12 h-12 rounded-full bg-white border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-900 transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Previous slide"
           >
             <ChevronLeft className="w-5 h-5 text-gray-700 group-hover:text-white transition-colors" />
           </button>
-          <button 
+          <button
             className="swiper-button-next-custom group w-12 h-12 rounded-full bg-white border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-900 transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Next slide"
           >
@@ -96,7 +96,7 @@ export default function SimilarProductsSlider({
       >
         {products.map((product) => (
           <SwiperSlide key={product.id}>
-            <div 
+            <div
               className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100"
               onMouseEnter={() => setHoveredId(product.id)}
               onMouseLeave={() => setHoveredId(null)}
@@ -109,10 +109,10 @@ export default function SimilarProductsSlider({
                     alt={product.title}
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
                   />
-                  
+
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
+
                   {/* Wishlist Button */}
                   {/* <button 
                     className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
@@ -165,7 +165,7 @@ export default function SimilarProductsSlider({
                   <p className="text-sm font-semibold text-gray-900 line-clamp-2 mb-3 group-hover:text-primary transition-colors leading-relaxed min-h-[2.5rem]">
                     {product.title}
                   </p>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-baseline gap-2">
                       <p className="text-primary font-bold text-xl">
@@ -175,7 +175,7 @@ export default function SimilarProductsSlider({
                         ${(product.price * 1.25).toFixed(2)}
                       </p> */}
                     </div>
-                    
+
                     {/* Rating */}
                     {/* <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
