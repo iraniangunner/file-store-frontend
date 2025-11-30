@@ -1,103 +1,10 @@
-
-
-// export function ProductCard({ product, view }: any) {
-//   const isFree = product.price == 0;
-//   const isList = view === "list";
-
-//   return (
-//     <div
-//       key={product.id}
-//       className={`group rounded-2xl transition-all duration-300 hover:shadow-2xl border border-divider overflow-hidden 
-//         ${isList ? "flex flex-row h-[200px]" : ""}`}
-//     >
-//       {/* IMAGE SECTION */}
-//       <div
-//         className={`p-0 relative overflow-hidden 
-//           ${isList ? "w-1/3 h-full" : ""}`}
-//       >
-//         <div
-//           className={`relative w-full ${
-//             isList ? "h-full" : "h-[240px]"
-//           } overflow-hidden`}
-//         >
-//           <img
-//             alt={product.title}
-//             src={
-//               product.image_url
-//                 ? `https://filerget.com${product.image_url}`
-//                 : "/images/folder.png"
-//             }
-//             className={`w-full h-full object-cover transition-transform duration-500 
-//               group-hover:scale-110`}
-//           />
-
-//           {isFree && (
-//             <span className="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-md shadow font-semibold">
-//               Free
-//             </span>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* TEXT SECTION */}
-//       <div className={`${isList ? "w-2/3 flex flex-col justify-between" : ""}`}>
-//         <div className={`p-5 space-y-2 ${isList ? "flex-1" : ""}`}>
-//           <h3 className="text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-//             {product.title}
-//           </h3>
-//           <p className="text-sm text-default-500 line-clamp-2 leading-relaxed">
-//             {product.description}
-//           </p>
-//         </div>
-
-//         {/* FOOTER */}
-//         <div
-//           className={`flex items-center justify-between px-5 pb-5 pt-0 gap-2 
-//             ${isList ? "" : ""}`}
-//         >
-//           <div className="flex flex-col">
-//             <span className="text-xs text-default-400">Price</span>
-//             <span className="text-2xl font-bold text-primary">
-//               ${product.price}
-//             </span>
-//           </div>
-
-//           <a
-//             href={`/products/${product.slug}`}
-//             className="font-semibold px-3 py-2 bg-primary/20 text-primary rounded-lg text-sm hover:bg-primary/30 transition"
-//           >
-//             View More
-//           </a>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-
 "use client";
 
-import { Product } from "@/types";
 import { Download, Star, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-interface ProductCardProps {
-  product: {
-    id: number;
-    title: string;
-    description: string;
-    price: number;
-    slug: string;
-    image_url?: string;
-    downloads_count?: number;
-    rating?: number;
-    is_featured?: boolean;
-  };
-  view?: "grid" | "list";
-}
-
-export function ProductCard({ product ,view}: any) {
-  const isFree = product.price === 0;
+export function ProductCard({ product, view }: any) {
+  const isFree = product.price == 0;
   const isList = view === "list";
 
   // Grid View
@@ -105,10 +12,10 @@ export function ProductCard({ product ,view}: any) {
     return (
       <Link
         href={`/products/${product.slug}`}
-        className="group block relative bg-white rounded-2xl overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300"
+        className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300"
       >
-        {/* Image Container */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+        {/* Image Container - Fixed aspect ratio */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 flex-shrink-0">
           <img
             alt={product.title}
             src={
@@ -121,14 +28,19 @@ export function ProductCard({ product ,view}: any) {
 
           {/* Top badges */}
           <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-            {product.is_featured && (
+            {/* Featured badge - left side */}
+            {product.is_featured ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 text-amber-950 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg">
                 <Sparkles className="w-3 h-3" />
                 Featured
               </span>
+            ) : (
+              <span />
             )}
+            
+            {/* Free badge - right side, always visible on image */}
             {isFree && (
-              <span className="ml-auto inline-flex items-center px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg">
+              <span className="inline-flex items-center px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg">
                 Free
               </span>
             )}
@@ -155,17 +67,22 @@ export function ProductCard({ product ,view}: any) {
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-5">
+        {/* Content - Flex grow to fill remaining space */}
+        <div className="flex flex-col flex-grow p-5">
+          {/* Title - Fixed height with line clamp */}
           <h3 className="text-base font-semibold text-slate-900 line-clamp-1 group-hover:text-violet-600 transition-colors duration-200">
             {product.title}
           </h3>
-          <p className="mt-1.5 text-sm text-slate-500 line-clamp-2 leading-relaxed">
-            {product.description}
-          </p>
+          
+          {/* Description - Fixed height container */}
+          <div className="mt-1.5 h-[2.75rem]">
+            <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
+              {product.description}
+            </p>
+          </div>
 
-          {/* Footer */}
-          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+          {/* Footer - Push to bottom with margin-top auto */}
+          <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
             <div>
               <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium">
                 Price
@@ -210,14 +127,19 @@ export function ProductCard({ product ,view}: any) {
             />
           </div>
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.is_featured && (
+          {/* Badges on image */}
+          <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+            {/* Featured badge - left */}
+            {product.is_featured ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 text-amber-950 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg">
                 <Sparkles className="w-3 h-3" />
                 Featured
               </span>
+            ) : (
+              <span />
             )}
+            
+            {/* Free badge - right */}
             {isFree && (
               <span className="inline-flex items-center px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg">
                 Free

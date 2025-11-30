@@ -8,21 +8,23 @@ import {
   File,
   HardDrive,
   Tag,
+  ChevronRight,
+  Star,
+  Eye,
+  Zap,
+  Lock,
 } from "lucide-react";
 
-// Client-only components
 const ProductDetailClient = dynamic(() => import("./Productdetailclient"), {
   ssr: false,
 });
 const CommentsSection = dynamic(() => import("./Commentsection"), {
   ssr: false,
 });
-
 const SimilarProductsSlider = dynamic(() => import("./Similarproducts"), {
   ssr: false,
 });
 
-// Helper function to format file size
 function formatFileSize(bytes: string | number): string {
   const size = Number(bytes);
   if (size === 0) return "0 Bytes";
@@ -32,14 +34,12 @@ function formatFileSize(bytes: string | number): string {
   return Math.round((size / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
-// Helper function to get file type label
 function getFileTypeLabel(mime: string): string {
   const mimeMap: Record<string, string> = {
     "application/pdf": "PDF",
     "application/epub+zip": "EPUB",
     "application/zip": "ZIP",
     "application/x-zip-compressed": "ZIP",
-    // "application/x-compressed": "ZIP",
     "image/jpeg": "JPEG",
     "image/png": "PNG",
     "video/mp4": "MP4",
@@ -52,44 +52,93 @@ export function ProductDetail({ product }: { product: any }) {
   const isFree = Number(product.price) === 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Breadcrumbs */}
-        <div className="mb-6 text-sm text-gray-600">
-          <Link href="/">Home</Link> / <Link href="/products">Products</Link> /{" "}
-          {product.title}
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50/50">
+      {/* Background decoration */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-violet-100/40 via-transparent to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-sky-100/40 via-transparent to-transparent rounded-full blur-3xl" />
+      </div>
 
-        {/* Back */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 text-sm mb-6">
+          <Link
+            href="/"
+            className="text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            Home
+          </Link>
+          <ChevronRight className="w-4 h-4 text-slate-300" />
+          <Link
+            href="/products"
+            className="text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            Products
+          </Link>
+          <ChevronRight className="w-4 h-4 text-slate-300" />
+          <span className="text-slate-900 font-medium truncate max-w-[200px]">
+            {product.title}
+          </span>
+        </nav>
+
+        {/* Back Button */}
         <Link
           href="/products"
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all duration-200 mb-8 group"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           Back to Products
         </Link>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Image */}
-          <div>
-            <img
-              src={product.image_url}
-              alt={product.title}
-              width={800}
-              height={800}
-              className="w-full h-auto object-cover rounded-lg"
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+          {/* Image Section */}
+          <div className="space-y-4">
+            <div className="relative bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden group">
+              {/* Badges */}
+              <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                {isFree && (
+                  <span className="inline-flex items-center px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg">
+                    FREE
+                  </span>
+                )}
+                {product.is_featured && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-400 text-amber-950 text-xs font-bold rounded-lg shadow-lg">
+                    <Star className="w-3 h-3 fill-current" />
+                    Featured
+                  </span>
+                )}
+              </div>
+
+              <img
+                src={product.image_url}
+                alt={product.title}
+                className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
           </div>
 
-          {/* Text */}
+          {/* Details Section */}
           <div className="space-y-6">
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-              {product.title}
-            </h1>
-
-            <div className="text-4xl font-bold text-primary">
-              {isFree ? "Free" : `$${product.price}`}
+            {/* Title & Price */}
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+                {product.title}
+              </h1>
+              <div className="flex items-baseline gap-3">
+                <span
+                  className={`text-4xl font-bold ${
+                    isFree
+                      ? "text-emerald-600"
+                      : "bg-gradient-to-r from-violet-600 to-violet-700 bg-clip-text text-transparent"
+                  }`}
+                >
+                  {isFree ? "Free" : `$${product.price}`}
+                </span>
+                {!isFree && (
+                  <span className="text-sm text-slate-400">USD</span>
+                )}
+              </div>
             </div>
 
             {/* Categories */}
@@ -98,75 +147,97 @@ export function ProductDetail({ product }: { product: any }) {
                 {product.categories.map((category: any) => (
                   <span
                     key={category.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-lg text-sm font-medium border border-violet-100"
                   >
-                    <Tag size={14} />
+                    <Tag className="w-3.5 h-3.5" />
                     {category.name}
                   </span>
                 ))}
               </div>
             )}
 
-            {/* File Info */}
+            {/* File Info Pills */}
             <div className="flex flex-wrap gap-3">
               {product.mime && (
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium">
-                  <File size={16} />
-                  {getFileTypeLabel(product.mime)}
-                </span>
+                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm">
+                  <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                    <File className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                      Format
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {getFileTypeLabel(product.mime)}
+                    </p>
+                  </div>
+                </div>
               )}
               {product.file_size && (
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
-                  <HardDrive size={16} />
-                  {formatFileSize(product.file_size)}
-                </span>
+                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <HardDrive className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                      Size
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {formatFileSize(product.file_size)}
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
-            {/*Product Rating*/}
 
             {/* Description */}
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Description</h3>
-              <p className="text-gray-600 leading-relaxed text-justify">
+            <div className="bg-white rounded-2xl border border-slate-200/60 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-3">
+                Description
+              </h3>
+              <p className="text-slate-600 leading-relaxed">
                 {product.description}
               </p>
             </div>
 
-            {/* Client Buttons (Like / Cart) */}
-            <div className="mt-4">
-              <ProductDetailClient product={product} />
-            </div>
+            {/* Client Buttons */}
+            <ProductDetailClient product={product} />
 
-            {/* Feature Icons */}
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              <div className="flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                <span className="text-primary text-2xl">
-                  <Wallet />
+            {/* Feature Cards */}
+            <div className="grid grid-cols-3 gap-3 pt-4">
+              <div className="flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl border border-slate-200/60 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 group">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-100 to-violet-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Wallet className="w-5 h-5 text-violet-600" />
+                </div>
+                <span className="text-xs font-medium text-slate-600">
+                  Crypto Payments
                 </span>
-                <span className="text-xs text-gray-600">Crypto Payments</span>
               </div>
-              <div className="flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                <span className="text-primary text-2xl">
-                  <Download />
+              <div className="flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl border border-slate-200/60 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 group">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Zap className="w-5 h-5 text-sky-600" />
+                </div>
+                <span className="text-xs font-medium text-slate-600">
+                  Instant Access
                 </span>
-                <span className="text-xs text-gray-600">Instant Access</span>
               </div>
-              <div className="flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                <span className="text-primary text-2xl">
-                  <Shield />
-                </span>
-                <span className="text-xs text-gray-600">
-                  Blockchain Secured
+              <div className="flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl border border-slate-200/60 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 group">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Lock className="w-5 h-5 text-emerald-600" />
+                </div>
+                <span className="text-xs font-medium text-slate-600">
+                  Secure Download
                 </span>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Similar Products */}
         <SimilarProductsSlider productSlug={product.slug} />
 
         {/* Comments */}
-        <div className="mt-12">
+        <div className="mt-16">
           <CommentsSection productSlug={product.slug} />
         </div>
       </div>
