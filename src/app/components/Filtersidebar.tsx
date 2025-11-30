@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   ChevronRight,
@@ -9,7 +8,7 @@ import {
   DollarSign,
   FileType,
   RotateCcw,
-  Filter,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
 import { CategoryApi } from "@/types";
@@ -78,10 +77,80 @@ export default function FilterSidebar({
     searchParams.file_types?.split(",").filter(Boolean) || []
   );
 
-  const [priceRangeValue, setPriceRangeValue] = useState<[number, number]>([
-    searchParams.min_price ? Number(searchParams.min_price) : minPrice,
-    searchParams.max_price ? Number(searchParams.max_price) : maxPrice,
-  ]);
+  // Price range - local state for immediate UI, separate from URL state
+  const [localMinPrice, setLocalMinPrice] = useState<number>(
+    searchParams.min_price ? Number(searchParams.min_price) : minPrice
+  );
+  const [localMaxPrice, setLocalMaxPrice] = useState<number>(
+    searchParams.max_price ? Number(searchParams.max_price) : maxPrice
+  );
+
+  // Debounce timer ref
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to update URL with price (called after debounce)
+  const updatePriceInUrl = useCallback(
+    (newMin: number, newMax: number) => {
+      const params = new URLSearchParams(currentSearchParams.toString());
+
+      if (newMin > minPrice) {
+        params.set("min_price", String(newMin));
+      } else {
+        params.delete("min_price");
+      }
+
+      if (newMax < maxPrice) {
+        params.set("max_price", String(newMax));
+      } else {
+        params.delete("max_price");
+      }
+
+      params.delete("page");
+
+      const newUrl = params.toString() ? `${pathname}?${params}` : pathname;
+      router.push(newUrl, { scroll: false });
+    },
+    [currentSearchParams, minPrice, maxPrice, pathname, router]
+  );
+
+  // Debounced price update
+  const debouncedPriceUpdate = useCallback(
+    (newMin: number, newMax: number) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        updatePriceInUrl(newMin, newMax);
+      }, 400);
+    },
+    [updatePriceInUrl]
+  );
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Handle min price slider change
+  const handleMinPriceChange = (value: number) => {
+    // Ensure min doesn't exceed max
+    const newMin = Math.min(value, localMaxPrice);
+    setLocalMinPrice(newMin);
+    debouncedPriceUpdate(newMin, localMaxPrice);
+  };
+
+  // Handle max price slider change
+  const handleMaxPriceChange = (value: number) => {
+    // Ensure max doesn't go below min
+    const newMax = Math.max(value, localMinPrice);
+    setLocalMaxPrice(newMax);
+    debouncedPriceUpdate(localMinPrice, newMax);
+  };
 
   const [expandedCategories, setExpandedCategories] = useState<
     Record<number, boolean>
@@ -106,7 +175,6 @@ export default function FilterSidebar({
   const updateFilters = (updates: {
     categories?: string[];
     fileTypes?: string[];
-    priceRange?: [number, number];
   }) => {
     const params = new URLSearchParams(currentSearchParams.toString());
 
@@ -124,20 +192,6 @@ export default function FilterSidebar({
         params.set("file_types", updates.fileTypes.join(","));
       } else {
         params.delete("file_types");
-      }
-    }
-
-    if (updates.priceRange) {
-      if (updates.priceRange[0] > minPrice) {
-        params.set("min_price", String(updates.priceRange[0]));
-      } else {
-        params.delete("min_price");
-      }
-
-      if (updates.priceRange[1] < maxPrice) {
-        params.set("max_price", String(updates.priceRange[1]));
-      } else {
-        params.delete("max_price");
       }
     }
 
@@ -185,26 +239,24 @@ export default function FilterSidebar({
     updateFilters({ fileTypes: newSelected });
   };
 
-  const handlePriceChange = (index: number, value: number) => {
-    const newRange: [number, number] = [...priceRangeValue] as [number, number];
-    newRange[index] = value;
-
-    if (index === 0 && newRange[0] > newRange[1]) {
-      newRange[0] = newRange[1];
-    }
-    if (index === 1 && newRange[1] < newRange[0]) {
-      newRange[1] = newRange[0];
-    }
-
-    setPriceRangeValue(newRange);
-    updateFilters({ priceRange: newRange });
-  };
-
   const resetAll = () => {
     setSelectedCategories([]);
     setSelectedFileTypes([]);
-    setPriceRangeValue([minPrice, maxPrice]);
+    setLocalMinPrice(minPrice);
+    setLocalMaxPrice(maxPrice);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
     router.push(pathname);
+  };
+
+  const resetPriceRange = () => {
+    setLocalMinPrice(minPrice);
+    setLocalMaxPrice(maxPrice);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    updatePriceInUrl(minPrice, maxPrice);
   };
 
   const handleMobileClose = () => {
@@ -214,7 +266,7 @@ export default function FilterSidebar({
     }
   };
 
-  // Custom Checkbox Component to ensure consistency
+  // Custom Checkbox Component
   const CustomCheckbox = ({
     checked,
     onChange,
@@ -224,33 +276,35 @@ export default function FilterSidebar({
     onChange: (checked: boolean) => void;
     label: string;
   }) => (
-    <label className="flex items-center gap-2.5 cursor-pointer flex-1 group min-w-0">
+    <label className="flex items-center gap-3 cursor-pointer flex-1 group min-w-0">
       <button
         type="button"
         role="checkbox"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`w-4 h-4 border-2 rounded flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+        className={`w-[18px] h-[18px] rounded-md flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
           checked
-            ? "bg-blue-600 border-blue-600"
-            : "border-gray-300 bg-white group-hover:border-blue-400"
+            ? "bg-gradient-to-br from-violet-500 to-violet-600 shadow-lg shadow-violet-500/25"
+            : "border-2 border-slate-300 bg-white group-hover:border-violet-400"
         }`}
       >
         {checked && (
-          <svg
+          <motion.svg
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
             className="w-3 h-3 text-white"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth="2.5"
+            strokeWidth="3"
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
             <path d="M5 13l4 4L19 7"></path>
-          </svg>
+          </motion.svg>
         )}
       </button>
-      <span className="text-sm text-gray-700 select-none group-hover:text-gray-900 truncate">
+      <span className="text-sm text-slate-600 select-none group-hover:text-slate-900 truncate transition-colors">
         {label}
       </span>
     </label>
@@ -269,19 +323,28 @@ export default function FilterSidebar({
     const isChecked = selectedCategories.includes(nodeId);
 
     return (
-      <div key={node.id} className="mb-1">
+      <div key={node.id} className="mb-0.5">
         <div
-          className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
-          style={{ paddingLeft: `${level * 8}px` }}
+          className={`flex items-center justify-between cursor-pointer py-2.5 px-3 rounded-xl transition-all duration-200 ${
+            isRoot
+              ? "hover:bg-slate-100/80"
+              : isChecked
+              ? "bg-violet-50/80"
+              : "hover:bg-slate-50"
+          }`}
+          style={{ paddingLeft: `${12 + level * 12}px` }}
           onClick={() => hasChildren && toggleExpandedFn(node.id)}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {isRoot ? (
-              <span className="font-semibold text-sm text-gray-900 truncate">
+              <span className="font-semibold text-sm text-slate-800 truncate">
                 {node.name}
               </span>
             ) : (
-              <div onClick={(e) => e.stopPropagation()} className="flex-1 min-w-0">
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 min-w-0"
+              >
                 <CustomCheckbox
                   checked={isChecked}
                   onChange={(checked) => handleCategoryChange(nodeId, checked)}
@@ -295,9 +358,10 @@ export default function FilterSidebar({
             {hasChildren ? (
               <motion.div
                 animate={{ rotate: isExpanded ? 90 : 0 }}
-                transition={{ duration: 0.25 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="p-0.5"
               >
-                <ChevronRight className="w-4 h-4 text-blue-600" />
+                <ChevronRight className="w-4 h-4 text-violet-500" />
               </motion.div>
             ) : (
               <div className="w-4" />
@@ -311,10 +375,10 @@ export default function FilterSidebar({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="pl-4 border-l border-gray-200 overflow-hidden"
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="ml-4 pl-3 border-l-2 border-slate-200/60 overflow-hidden"
             >
-              <div className="mt-2">
+              <div className="py-1">
                 {(node.children_recursive || []).map((child) =>
                   renderCategoryTree(
                     child,
@@ -337,44 +401,61 @@ export default function FilterSidebar({
   const activeFilterCount =
     selectedCategories.length +
     selectedFileTypes.length +
-    (priceRangeValue[0] !== minPrice || priceRangeValue[1] !== maxPrice ? 1 : 0);
+    (localMinPrice !== minPrice || localMaxPrice !== maxPrice ? 1 : 0);
 
-  const pricePercentMin =
-    ((priceRangeValue[0] - minPrice) / (maxPrice - minPrice)) * 100;
-  const pricePercentMax =
-    ((priceRangeValue[1] - minPrice) / (maxPrice - minPrice)) * 100;
+  const isPriceModified = localMinPrice !== minPrice || localMaxPrice !== maxPrice;
+
+  // Calculate percentages for the visual track
+  const range = maxPrice - minPrice;
+  const minPercent = range > 0 ? ((localMinPrice - minPrice) / range) * 100 : 0;
+  const maxPercent = range > 0 ? ((localMaxPrice - minPrice) / range) * 100 : 100;
 
   const filterContent = (
-    <div className="p-4 sm:p-6">
-      <div className="flex justify-between items-center mb-4 sm:mb-6">
-        <h3 className="font-semibold flex items-center gap-2 text-lg text-gray-900">
-          <Filter className="w-5 h-5 text-primary" /> Filters
-        </h3>
+    <div className="p-5 sm:p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl shadow-lg shadow-violet-500/20">
+            <SlidersHorizontal className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">Filters</h3>
+            {activeFilterCount > 0 && (
+              <span className="text-xs text-slate-500">
+                {activeFilterCount} active
+              </span>
+            )}
+          </div>
+        </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={resetAll}
-            className="px-3 py-1.5 text-sm flex justify-center items-center font-medium cursor-pointer text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span className="ml-1">Reset</span>
-          </button>
+          {activeFilterCount > 0 && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={resetAll}
+              className="px-3 py-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all duration-200 flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Clear all
+            </motion.button>
+          )}
           <button
             onClick={handleMobileClose}
-            className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            className="lg:hidden p-2 hover:bg-slate-100 rounded-xl transition-colors"
             aria-label="Close filters"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
       </div>
 
       {/* Categories */}
       <div className="mb-6">
-        <h4 className="font-medium mb-3 flex items-center gap-2 text-sm text-gray-900">
-          <Package className="w-4 h-4 text-blue-600" />
-          Categories
-        </h4>
-        <div className="max-h-60 sm:max-h-80 overflow-y-auto pr-2 space-y-1">
+        <div className="flex items-center gap-2 mb-3">
+          <Package className="w-4 h-4 text-violet-500" />
+          <h4 className="font-medium text-sm text-slate-800">Categories</h4>
+        </div>
+        <div className="max-h-72 overflow-y-auto pr-1 -mr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
           {rootCategories.map((cat) =>
             renderCategoryTree(cat, expandedCategories, toggleExpanded)
           )}
@@ -383,86 +464,174 @@ export default function FilterSidebar({
 
       {/* Price Range */}
       <div className="mb-6">
-        <h4 className="font-medium mb-3 flex items-center gap-2 text-sm text-gray-900">
-          <DollarSign className="w-4 h-4 text-blue-600" />
-          Price Range
-        </h4>
-        <div className="relative pt-1 pb-4">
-          <div className="relative h-2 bg-gray-200 rounded-full">
-            <div
-              className="absolute h-2 bg-blue-600 rounded-full"
-              style={{
-                left: `${pricePercentMin}%`,
-                right: `${100 - pricePercentMax}%`,
-              }}
-            />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-violet-500" />
+            <h4 className="font-medium text-sm text-slate-800">Price Range</h4>
           </div>
-          <input
-            type="range"
-            min={minPrice}
-            max={maxPrice}
-            value={priceRangeValue[0]}
-            onChange={(e) => handlePriceChange(0, Number(e.target.value))}
-            className="absolute w-full h-2 top-1 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-blue-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-transform [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-blue-600 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
-          />
-          <input
-            type="range"
-            min={minPrice}
-            max={maxPrice}
-            value={priceRangeValue[1]}
-            onChange={(e) => handlePriceChange(1, Number(e.target.value))}
-            className="absolute w-full h-2 top-1 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-blue-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-transform [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-blue-600 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
-          />
+          {isPriceModified && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={resetPriceRange}
+              className="text-xs text-violet-600 hover:text-violet-700 font-medium transition-colors"
+            >
+              Reset
+            </motion.button>
+          )}
         </div>
-        <div className="flex justify-between text-xs text-gray-500 mt-2">
-          <span>${priceRangeValue[0]}</span>
-          <span>${priceRangeValue[1]}</span>
+
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl p-4">
+          {/* Current values display */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1">
+              <div className="bg-white rounded-xl px-3 py-2.5 border-2 border-slate-200 text-center">
+                <span className="text-base font-bold text-slate-900">
+                  ${localMinPrice}
+                </span>
+              </div>
+              <span className="block text-[10px] uppercase tracking-wider text-slate-400 mt-1.5 text-center">
+                Min
+              </span>
+            </div>
+
+            <div className="text-slate-300 mt-[-18px]">
+              <span className="text-lg">—</span>
+            </div>
+
+            <div className="flex-1">
+              <div className="bg-white rounded-xl px-3 py-2.5 border-2 border-slate-200 text-center">
+                <span className="text-base font-bold text-slate-900">
+                  ${localMaxPrice}
+                </span>
+              </div>
+              <span className="block text-[10px] uppercase tracking-wider text-slate-400 mt-1.5 text-center">
+                Max
+              </span>
+            </div>
+          </div>
+
+          {/* Min Slider */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-slate-500">Minimum Price</span>
+              <span className="text-xs font-medium text-slate-700">${localMinPrice}</span>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 h-2 bg-slate-200 rounded-full top-1/2 -translate-y-1/2" />
+              <div
+                className="absolute h-2 bg-gradient-to-r from-violet-500 to-violet-400 rounded-full top-1/2 -translate-y-1/2"
+                style={{
+                  left: 0,
+                  width: `${minPercent}%`,
+                }}
+              />
+              <input
+                type="range"
+                min={minPrice}
+                max={maxPrice}
+                step={1}
+                value={localMinPrice}
+                onChange={(e) => handleMinPriceChange(Number(e.target.value))}
+                className="relative w-full h-2 appearance-none bg-transparent cursor-pointer z-10
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-white
+                  [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-violet-500
+                  [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-violet-500/30
+                  [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing
+                  [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-transform
+                  [&::-moz-range-thumb]:appearance-none
+                  [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5
+                  [&::-moz-range-thumb]:rounded-full
+                  [&::-moz-range-thumb]:bg-white
+                  [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-violet-500
+                  [&::-moz-range-thumb]:shadow-lg
+                  [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:active:cursor-grabbing
+                  [&::-moz-range-track]:bg-transparent
+                  [&::-webkit-slider-runnable-track]:bg-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Max Slider */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-slate-500">Maximum Price</span>
+              <span className="text-xs font-medium text-slate-700">${localMaxPrice}</span>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 h-2 bg-slate-200 rounded-full top-1/2 -translate-y-1/2" />
+              <div
+                className="absolute h-2 bg-gradient-to-r from-violet-400 to-violet-500 rounded-full top-1/2 -translate-y-1/2"
+                style={{
+                  left: 0,
+                  width: `${maxPercent}%`,
+                }}
+              />
+              <input
+                type="range"
+                min={minPrice}
+                max={maxPrice}
+                step={1}
+                value={localMaxPrice}
+                onChange={(e) => handleMaxPriceChange(Number(e.target.value))}
+                className="relative w-full h-2 appearance-none bg-transparent cursor-pointer z-10
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-white
+                  [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-violet-500
+                  [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-violet-500/30
+                  [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing
+                  [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-transform
+                  [&::-moz-range-thumb]:appearance-none
+                  [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5
+                  [&::-moz-range-thumb]:rounded-full
+                  [&::-moz-range-thumb]:bg-white
+                  [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-violet-500
+                  [&::-moz-range-thumb]:shadow-lg
+                  [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:active:cursor-grabbing
+                  [&::-moz-range-track]:bg-transparent
+                  [&::-webkit-slider-runnable-track]:bg-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Range labels */}
+          <div className="flex justify-between text-[10px] text-slate-400 font-medium pt-1">
+            <span>${minPrice}</span>
+            <span>${maxPrice}</span>
+          </div>
         </div>
       </div>
 
       {/* File Types */}
       <div>
-        <h4 className="font-medium mb-3 flex items-center gap-2 text-sm text-gray-900">
-          <FileType className="w-4 h-4 text-blue-600" />
-          File Types
-        </h4>
-        <div className="space-y-2.5">
+        <div className="flex items-center gap-2 mb-3">
+          <FileType className="w-4 h-4 text-violet-500" />
+          <h4 className="font-medium text-sm text-slate-800">File Types</h4>
+        </div>
+        <div className="flex flex-wrap gap-2">
           {fileTypes.map((type: any) => {
             const isFileTypeChecked = selectedFileTypes.includes(type.type);
             return (
-              <label
+              <motion.button
                 key={type.type}
-                className="flex items-center gap-2.5 cursor-pointer group"
+                onClick={() =>
+                  handleFileTypeChange(type.type, !isFileTypeChecked)
+                }
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-xl transition-all duration-200 ${
+                  isFileTypeChecked
+                    ? "bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-lg shadow-violet-500/25"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
               >
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={isFileTypeChecked}
-                  onClick={() => handleFileTypeChange(type.type, !isFileTypeChecked)}
-                  className={`w-4 h-4 border-2 rounded flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                    isFileTypeChecked
-                      ? "bg-blue-600 border-blue-600"
-                      : "border-gray-300 bg-white group-hover:border-blue-400"
-                  }`}
-                >
-                  {isFileTypeChecked && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  )}
-                </button>
-                <span className="text-sm text-gray-700 select-none group-hover:text-gray-900">
-                  {type.type.toUpperCase()}
-                </span>
-              </label>
+                .{type.type}
+              </motion.button>
             );
           })}
         </div>
@@ -474,25 +643,33 @@ export default function FilterSidebar({
     <>
       {/* Mobile Filter Button */}
       <div className="lg:hidden fixed bottom-6 right-6 z-30">
-        <button
+        <motion.button
           onClick={() => setIsMobileFilterOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2 relative"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-gradient-to-br from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white rounded-2xl px-5 py-3.5 shadow-xl shadow-violet-500/30 transition-all duration-200 flex items-center gap-2.5 relative"
           aria-label="Open filters"
         >
-          <Filter className="w-5 h-5" />
-          <span className="font-medium">Filters</span>
+          <SlidersHorizontal className="w-5 h-5" />
+          <span className="font-semibold">Filters</span>
           {activeFilterCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-2 -right-2 bg-white text-violet-600 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg ring-2 ring-violet-500"
+            >
               {activeFilterCount}
-            </span>
+            </motion.span>
           )}
-        </button>
+        </motion.button>
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-80 space-y-4">
-        <div className="rounded-2xl shadow-sm bg-white border border-gray-200 sticky top-20">
-          {filterContent}
+      <aside className="hidden lg:block w-80 flex-shrink-0">
+        <div className="sticky top-24">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200/60 overflow-hidden">
+            {filterContent}
+          </div>
         </div>
       </aside>
 
@@ -506,7 +683,7 @@ export default function FilterSidebar({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="lg:hidden fixed inset-0 bg-black/50 z-40"
+              className="lg:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40"
               onClick={handleMobileClose}
             />
 
@@ -518,9 +695,7 @@ export default function FilterSidebar({
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className="lg:hidden fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white z-50 overflow-y-auto shadow-2xl"
             >
-              <div className="rounded-2xl bg-white">
-                {filterContent}
-              </div>
+              {filterContent}
             </motion.div>
           </>
         )}

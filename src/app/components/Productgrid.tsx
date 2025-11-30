@@ -27,9 +27,6 @@ const PaginationWrapper = dynamic(() => import("./Paginationwrapper"), {
   ssr: false,
 });
 const SearchBar = dynamic(() => import("./Searchbar"), { ssr: false });
-const ViewModeToggle = dynamic(() => import("./Viewmodetoggle"), {
-  ssr: false,
-});
 
 export default function ProductGrid({
   initialProducts,
@@ -41,35 +38,70 @@ export default function ProductGrid({
   searchParams,
 }: ProductGridProps) {
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 mt-12">
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <SearchBar initialValue={searchParams.search} />
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50/50">
+      {/* Subtle background pattern */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(148,163,184,0.1),transparent_50%)]" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-violet-100/30 via-transparent to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-sky-100/30 via-transparent to-transparent rounded-full blur-3xl" />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 mb-32">
-        <FilterSidebar
-          categories={categories}
-          priceRange={priceRange}
-          fileTypes={fileTypes}
-          searchParams={searchParams}
-        />
+      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 mt-8">
+        {/* Header Section */}
+        <div className="mb-10">
+          <div className="flex flex-col gap-6">
+            {/* Title area */}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-slate-400 mb-2">
+                  <span className="w-8 h-px bg-gradient-to-r from-violet-500 to-sky-500" />
+                  Browse
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+                  Product Catalog
+                </h1>
+              </div>
+            </div>
 
-        <main className="flex-1">
-          <ProductsHeader productsCount={initialProducts.length} />
+            {/* Search Bar */}
+            <div className="max-w-2xl">
+              <SearchBar initialValue={searchParams.search} />
+            </div>
+          </div>
+        </div>
 
-          {initialProducts.length > 0 ? (
-            <ProductsList products={initialProducts} />
-          ) : (
-            <EmptyState />
-          )}
+        {/* Main Content */}
+        <div className="flex flex-col lg:flex-row gap-8 mb-24">
+          {/* Sidebar */}
+          <FilterSidebar
+            categories={categories}
+            priceRange={priceRange}
+            fileTypes={fileTypes}
+            searchParams={searchParams}
+          />
 
-          {initialProducts.length > 0 && initialTotalPages > 1 && (
-            <PaginationWrapper
-              currentPage={initialPage}
-              totalPages={initialTotalPages}
-            />
-          )}
-        </main>
+          {/* Products Area */}
+          <main className="flex-1 min-w-0">
+            <ProductsHeader productsCount={initialProducts.length} />
+
+            <div className="mt-6">
+              {initialProducts.length > 0 ? (
+                <ProductsList products={initialProducts} />
+              ) : (
+                <EmptyState />
+              )}
+            </div>
+
+            {initialProducts.length > 0 && initialTotalPages > 1 && (
+              <div className="mt-12 pt-8 border-t border-slate-200/60">
+                <PaginationWrapper
+                  currentPage={initialPage}
+                  totalPages={initialTotalPages}
+                />
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
