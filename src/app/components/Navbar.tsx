@@ -3,6 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
+  Button,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
@@ -29,6 +37,7 @@ import {
   FileBox,
   Mail,
   User as UserIcon,
+  HelpCircle,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
@@ -101,10 +110,10 @@ export default function AppNavbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ${
         scrolled
-          ? "bg-white/90 backdrop-blur-xl shadow-lg shadow-slate-200/50 border-b border-slate-200/60"
-          : "bg-white/70 backdrop-blur-md"
+          ? "bg-white/90 backdrop-blur-xl shadow-lg shadow-slate-200/50 border-slate-200/60"
+          : "bg-white/70 backdrop-blur-md border-transparent"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -131,6 +140,13 @@ export default function AppNavbar() {
             >
               <FileBox className="w-4 h-4" />
               Products
+            </Link>
+            <Link
+              href="/faq"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all duration-200"
+            >
+              <HelpCircle className="w-4 h-4" />
+              FAQ
             </Link>
             <Link
               href="/contact-us"
@@ -307,6 +323,16 @@ export default function AppNavbar() {
               <FileBox className="w-5 h-5 text-sky-600" />
             </div>
             <span className="font-medium">Products</span>
+          </button>
+
+          <button
+            onClick={() => handleNav("/faq")}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+          >
+            <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
+              <HelpCircle className="w-5 h-5 text-violet-600" />
+            </div>
+            <span className="font-medium">FAQ</span>
           </button>
 
           <button
