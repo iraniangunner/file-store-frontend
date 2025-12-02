@@ -63,6 +63,21 @@ export default function MainSideBar() {
       icon: <Settings size={18} />,
       href: "/admin/product-ratings",
     },
+    {
+      name: "Blog Posts",
+      icon: <Settings size={18} />,
+      href: "/admin/blog-posts",
+    },
+    {
+      name: "Blog Categories",
+      icon: <Settings size={18} />,
+      href: "/admin/blog-categories",
+    },
+    {
+      name: "Blog Tags",
+      icon: <Settings size={18} />,
+      href: "/admin/blog-tags",
+    },
   ];
 
   return (
