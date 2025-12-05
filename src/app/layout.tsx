@@ -2,6 +2,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@heroui/react";
+import NextTopLoader from "nextjs-toploader";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ import { Navbar } from "@heroui/react";
 
 export const metadata = {
   verification: {
-    google: "mDyxRv4048g-2nWuFLoEMSy7OPQQD8up6gcsw438vaQ", 
+    google: "mDyxRv4048g-2nWuFLoEMSy7OPQQD8up6gcsw438vaQ",
   },
 };
 
@@ -28,7 +29,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" dir="ltr">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {/* Top loader */}
+        <NextTopLoader
+          color="#6366f1" // Loader color (violet)
+          height={3} // Thickness
+          showSpinner={false} // Hide spinner
+          crawlSpeed={200} // Animation speed
+        />
+        {children}
+      </body>
     </html>
   );
 }
