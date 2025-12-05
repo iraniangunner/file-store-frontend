@@ -17,12 +17,92 @@ import {
 
 const ProductDetailClient = dynamic(() => import("./Productdetailclient"), {
   ssr: false,
+  loading: () => (
+    <div className="space-y-4 animate-pulse">
+      {/* Add to Cart Skeleton */}
+      <div className="w-full h-14 bg-slate-200 rounded-2xl"></div>
+
+      {/* Like + Share Skeleton */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-12 bg-slate-200 rounded-xl"></div>
+        <div className="flex-1 h-12 bg-slate-200 rounded-xl"></div>
+      </div>
+    </div>
+  ),
 });
+
 const CommentsSection = dynamic(() => import("./Commentsection"), {
   ssr: false,
+  loading: () => (
+    <div className="space-y-8 animate-pulse">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-slate-200" />
+        <div>
+          <div className="h-6 w-40 bg-slate-200 rounded-lg mb-2" />
+          <div className="h-4 w-24 bg-slate-100 rounded-lg" />
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="h-4 w-32 bg-slate-200 rounded mb-4" />
+        <div className="h-28 w-full bg-slate-100 rounded-xl mb-4" />
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-48 bg-slate-100 rounded" />
+          <div className="h-10 w-32 bg-slate-300 rounded-xl" />
+        </div>
+      </div>
+
+      {/* Comments List */}
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-white rounded-2xl border border-slate-200 p-6"
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-200" />
+              <div className="flex-1">
+                <div className="h-4 w-36 bg-slate-200 rounded mb-2" />
+                <div className="h-3 w-20 bg-slate-100 rounded" />
+              </div>
+            </div>
+            <div className="h-4 w-full bg-slate-100 rounded mb-2" />
+            <div className="h-4 w-3/4 bg-slate-100 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
 });
+
 const SimilarProductsSlider = dynamic(() => import("./Similarproducts"), {
   ssr: false,
+  loading: () => (
+    <div className="mt-16">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse mb-2" />
+          <div className="h-4 w-64 bg-slate-100 rounded-lg animate-pulse" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-white rounded-2xl border border-slate-200 overflow-hidden"
+          >
+            <div className="aspect-square bg-slate-100 animate-pulse" />
+            <div className="p-5">
+              <div className="h-5 w-3/4 bg-slate-200 rounded-lg animate-pulse mb-3" />
+              <div className="h-6 w-20 bg-slate-200 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
 });
 
 function formatFileSize(bytes: string | number): string {
@@ -135,9 +215,7 @@ export function ProductDetail({ product }: { product: any }) {
                 >
                   {isFree ? "Free" : `$${product.price}`}
                 </span>
-                {!isFree && (
-                  <span className="text-sm text-slate-400">USD</span>
-                )}
+                {!isFree && <span className="text-sm text-slate-400">USD</span>}
               </div>
             </div>
 

@@ -172,11 +172,28 @@ export default function CommentsSection({ productSlug }: CommentsSectionProps) {
 
       {/* Comments List */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="flex flex-col items-center gap-3">
-            <Spinner size="lg" />
-            <p className="text-sm text-slate-500">Loading comments...</p>
-          </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 animate-pulse"
+            >
+              {/* Header Skeleton */}
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-slate-200"></div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="w-32 h-4 bg-slate-200 rounded"></div>
+                  <div className="w-24 h-3 bg-slate-200 rounded"></div>
+                </div>
+              </div>
+
+              {/* Content Skeleton */}
+              <div className="space-y-2 pl-14">
+                <div className="w-full h-3 bg-slate-200 rounded"></div>
+                <div className="w-3/4 h-3 bg-slate-200 rounded"></div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : comments.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-12 text-center">

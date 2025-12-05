@@ -25,8 +25,36 @@ interface ProductGridProps {
 
 const PaginationWrapper = dynamic(() => import("./Paginationwrapper"), {
   ssr: false,
+  loading: () => (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mt-8 animate-pulse">
+      {/* Page info skeleton */}
+      <div className="flex items-center gap-2 text-sm order-2 sm:order-1">
+        <div className="h-6 w-10 bg-slate-200 rounded-lg" />
+        <div className="h-7 w-8 bg-slate-300 rounded-lg" />
+        <div className="h-6 w-14 bg-slate-200 rounded-lg" />
+      </div>
+
+      {/* Pagination buttons skeleton */}
+      <div className="inline-flex items-center gap-1 p-1.5 bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/60 order-1 sm:order-2">
+        {/* 6 button placeholders */}
+        {[...Array(7)].map((_, i) => (
+          <div key={i} className="w-9 h-9 rounded-xl bg-slate-200" />
+        ))}
+      </div>
+    </div>
+  ),
 });
-const SearchBar = dynamic(() => import("./Searchbar"), { ssr: false });
+
+const SearchBar = dynamic(() => import("./Searchbar"), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full">
+      <div className="animate-pulse">
+        <div className="h-14 rounded-2xl bg-slate-200/60 w-full"></div>
+      </div>
+    </div>
+  ),
+});
 
 export default function ProductGrid({
   initialProducts,
